@@ -1,17 +1,19 @@
+use crate::types::{ActivationContext, ActivationInit, ActivationResponse};
 use serde::Serialize;
 use tide::Request;
 
 #[derive(Serialize)]
 struct RuntimeResponse {
-    containerId: String,
+    #[serde(rename(serialize = "containerId"))]
+    container_id: String,
     port: i32,
 }
 
-pub async fn start(mut req: Request<()>) -> tide::Result<serde_json::Value> {
-    println!("start called with {:#?}", req.body_string().await);
+pub async fn start(mut _req: Request<()>) -> tide::Result<serde_json::Value> {
+    // println!("start called with {:#?}", req.body_string().await);
 
     let resp = RuntimeResponse {
-        containerId: "1".into(),
+        container_id: "1".into(),
         port: 9000,
     };
 
@@ -19,13 +21,17 @@ pub async fn start(mut req: Request<()>) -> tide::Result<serde_json::Value> {
 }
 
 pub async fn init(mut req: Request<()>) -> tide::Result<tide::StatusCode> {
-    println!("init called with {:#?}", req.body_string().await);
+    let activation_init: ActivationInit = req.body_json().await?;
+
+    println!("/init {:#?}", activation_init);
 
     Ok(tide::StatusCode::Ok)
 }
 
-pub async fn run(mut req: Request<()>) -> tide::Result<tide::StatusCode> {
-    println!("run called with {:#?}", req.body_string().await);
+pub async fn run(mut req: Request<()>) -> tide::Result<serde_json::Value> {
+    let activation_context: tide::Result<ActivationContext> = req.body_json().await;
 
-    Ok(tide::StatusCode::Ok)
+    println!("/run {:#?}", activation_context.unwrap());
+
+    Ok(serde_json::to_value(ActivationResponse::default()).unwrap())
 }
