@@ -1,6 +1,5 @@
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
-use std::default::Default;
 
 #[derive(PartialEq, Clone)]
 pub enum ActivationResponseStatus {
@@ -31,17 +30,11 @@ pub struct ActivationResponse {
     status: ActivationResponseStatus,
     status_code: u8,
     success: bool,
-    result: HashMap<String, String>,
-}
-
-impl Default for ActivationResponse {
-    fn default() -> Self {
-        Self::new(ActivationResponseStatus::Success, HashMap::new())
-    }
+    result: serde_json::Value,
 }
 
 impl ActivationResponse {
-    fn new(status: ActivationResponseStatus, result: HashMap<String, String>) -> Self {
+    pub fn new(status: ActivationResponseStatus, result: serde_json::Value) -> Self {
         Self {
             success: status == ActivationResponseStatus::Success,
             status_code: status.clone() as u8,
@@ -53,29 +46,29 @@ impl ActivationResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct ActivationInit {
-    value: ActivationInitInner,
+    pub value: ActivationInitInner,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ActivationInitInner {
-    name: String,
-    main: String,
-    code: String,
-    binary: bool,
-    env: HashMap<String, String>,
+    pub name: String,
+    pub main: String,
+    pub code: String,
+    pub binary: bool,
+    pub env: HashMap<String, String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ActivationContext {
-    value: serde_json::Value,
-    namespace: String,
-    action_name: String,
-    api_host: Option<String>,
-    api_key: Option<String>,
-    activation_id: String,
-    transaction_id: String,
+    pub value: serde_json::Value,
+    pub namespace: String,
+    pub action_name: String,
+    pub api_host: Option<String>,
+    pub api_key: Option<String>,
+    pub activation_id: String,
+    pub transaction_id: String,
     #[serde(deserialize_with = "str_to_u64")]
-    deadline: u64,
+    pub deadline: u64,
 }
 
 fn str_to_u64<'de, D>(deserializer: D) -> Result<u64, D::Error>
