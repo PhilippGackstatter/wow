@@ -4,7 +4,7 @@ use std::collections::HashMap;
 #[derive(PartialEq, Clone)]
 pub enum ActivationResponseStatus {
     Success = 0,
-    // ApplicationError = 1,
+    ApplicationError = 1,
     // ActionDeveloperError = 2,
     // WhiskInternalError = 3,
 }
@@ -18,7 +18,7 @@ impl Serialize for ActivationResponseStatus {
 
         match self {
             Success => serializer.serialize_str("success"),
-            // ApplicationError => serializer.serialize_str("application error"),
+            ApplicationError => serializer.serialize_str("application error"),
             // ActionDeveloperError => serializer.serialize_str("action developer error"),
             // WhiskInternalError => serializer.serialize_str("whisk internal error"),
         }
@@ -34,12 +34,26 @@ pub struct ActivationResponse {
 }
 
 impl ActivationResponse {
-    pub fn new(status: ActivationResponseStatus, result: serde_json::Value) -> Self {
-        Self {
-            success: status == ActivationResponseStatus::Success,
-            status_code: status.clone() as u8,
-            status,
-            result,
+    pub fn new(result: Result<serde_json::Value, serde_json::Value>) -> Self {
+        match result {
+            Ok(ok) => {
+                let status = ActivationResponseStatus::Success;
+                Self {
+                    success: true,
+                    status_code: status.clone() as u8,
+                    status,
+                    result: ok,
+                }
+            }
+            Err(err) => {
+                let status = ActivationResponseStatus::ApplicationError;
+                Self {
+                    success: false,
+                    status_code: status.clone() as u8,
+                    status,
+                    result: err,
+                }
+            }
         }
     }
 }

@@ -1,8 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::types::{
-    ActivationContext, ActivationInit, ActivationResponse, ActivationResponseStatus,
-};
+use crate::types::{ActivationContext, ActivationInit, ActivationResponse};
 use async_std::sync::RwLock;
 use serde::Serialize;
 use tide::{Request, StatusCode};
@@ -58,9 +56,10 @@ pub async fn run(mut req: Request<AtomicHashMap>) -> tide::Result<serde_json::Va
         .get(&activation_context.action_name)
         .ok_or_else(|| tide::Error::from_str(StatusCode::NotFound, "No action with that name"))?;
 
+    // TODO: Don't try!, but pass error into ActivationRes. and use `ApplicationDeveloperError`
     let response = crate::wasmtime::execute_wasm(activation_context.value, wasm_bytes)?;
 
-    let response = ActivationResponse::new(ActivationResponseStatus::Success, response);
+    let response = ActivationResponse::new(response);
 
     Ok(serde_json::to_value(response).unwrap())
 }
