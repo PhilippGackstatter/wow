@@ -12,7 +12,7 @@ path = "src/bin/wasmruntime.rs"
 
 [dependencies]
 async-std = { version = "1.6.3", features = ["unstable", "attributes"] }
-tide = "0.14.0"
+tide = "0.15.0"
 async-trait = "0.1.40"
 serde_json = "1.0.57"
 serde = { version = "1.0", features = ["derive"] }
