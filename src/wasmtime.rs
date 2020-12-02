@@ -2,41 +2,37 @@ use std::ptr::slice_from_raw_parts;
 
 use anyhow::anyhow;
 use wasmtime::*;
+use wasmtime_wasi::{Wasi, WasiCtxBuilder};
 
 pub fn execute_wasm(
     parameters: serde_json::Value,
     wasm_bytes: &Vec<u8>,
 ) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error> {
     let engine = Engine::default();
-    // A `Store` is a sort of "global object" in a sense, but for now it suffices
-    // to say that it's generally passed to most constructors.
+
     let store = Store::new(&engine);
 
-    // We start off by creating a `Module` which represents a compiled form
-    // of our input wasm module. In this case it'll be JIT-compiled after
-    // we parse the text format.
-    let module = Module::new(&engine, wasm_bytes)?;
+    let mut linker = Linker::new(&store);
 
-    // After we have a compiled `Module` we can then instantiate it, creating
-    // an `Instance` which we can actually poke at functions on.
-    let instance = Instance::new(&store, &module, &[])?;
+    let ctx = WasiCtxBuilder::new()
+        .inherit_stdout()
+        .inherit_stderr()
+        .build()?;
+    let wasi = Wasi::new(&store, ctx);
+    wasi.add_to_linker(&mut linker)?;
 
-    // The `Instance` gives us access to various exported functions and items,
-    // which we access here to pull out our `answer` exported function and
-    // run it.
+    let module = Module::new(store.engine(), wasm_bytes)?;
+
+    let instance = linker.instantiate(&module)?;
+
     let main = instance
         .get_func("wrapped_func")
         .expect("The module did not export the expected `wrapped_func` function");
 
-    // There's a few ways we can call the `answer` `Func` value. The easiest
-    // is to statically assert its signature with `get0` (in this case asserting
-    // it takes no arguments and returns one i32) and then call it.
     let main = main.get1::<i32, i32>()?;
 
     let len = pass_string_arg(&instance, &parameters)?;
 
-    // And finally we can call our function! Note that the error propagation
-    // with `?` is done to handle the case where the wasm function traps.
     let len: i32 = main(len as i32)?;
 
     Ok(get_return_value(&instance, len as usize))
@@ -138,6 +134,24 @@ mod tests {
             res,
             serde_json::json!({
                 "error": "Expected param2."
+            })
+        );
+    }
+
+    #[test]
+    fn test_can_execute_wasm32_wasi_module() {
+        let wasm_bytes = include_bytes!(
+            "../../testfns-openwhisk/wasi_println/target/wasm32-wasi/release/wasi_println.wasm"
+        );
+
+        let res = execute_wasm(serde_json::json!({"param": 5}), &wasm_bytes.to_vec())
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            res,
+            serde_json::json!({
+                "result": 5
             })
         );
     }
