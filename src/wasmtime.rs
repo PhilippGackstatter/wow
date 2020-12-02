@@ -45,22 +45,31 @@ pub fn execute_wasm(
 fn pass_string_arg(instance: &Instance, json: &serde_json::Value) -> Result<usize, anyhow::Error> {
     let json_bytes = serde_json::to_vec(json).unwrap();
 
-    let memory_ptr_func = instance
+    let wasm_memory_buffer_allocate_space = instance
+        .get_func("wasm_memory_buffer_allocate_space")
+        .ok_or_else(|| {
+            anyhow!("Expected the module to export `wasm_memory_buffer_allocate_space`")
+        })?
+        .get1::<i32, ()>()?;
+
+    wasm_memory_buffer_allocate_space(json_bytes.len() as i32)?;
+
+    let memory_buffer_func = instance
         .get_func("get_wasm_memory_buffer_pointer")
         .ok_or_else(|| anyhow!("Expected the module to export `get_wasm_memory_buffer_pointer`"))?
         .get0::<i32>()?;
 
-    let memory_ptr_offset = memory_ptr_func().unwrap();
+    let memory_buffer_offset = memory_buffer_func().unwrap();
 
     let memory_base_ptr = instance
         .get_memory("memory")
         .ok_or_else(|| anyhow!("Expected the module to export a memory named `memory`"))?
         .data_ptr();
 
-    for (i, b) in json_bytes.iter().enumerate() {
-        unsafe {
-            *memory_base_ptr.offset((memory_ptr_offset as isize) + i as isize) = *b;
-        }
+    unsafe {
+        memory_base_ptr
+            .offset(memory_buffer_offset as isize)
+            .copy_from_nonoverlapping(json_bytes.as_ptr(), json_bytes.len());
     }
 
     Ok(json_bytes.len())
