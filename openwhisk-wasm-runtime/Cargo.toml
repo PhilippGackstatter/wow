@@ -1,0 +1,21 @@
+[package]
+name = "openwhisk-wasm-runtime"
+version = "0.1.0"
+authors = ["PhilippGackstatter <philipp.gackstatter@student.tuwien.ac.at>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "wasmruntime"
+path = "src/bin/wasmruntime.rs"
+
+[dependencies]
+async-std = { version = "1.6.3", features = ["unstable", "attributes"] }
+tide = "0.15.0"
+async-trait = "0.1.40"
+serde_json = "1.0.57"
+serde = { version = "1.0", features = ["derive"] }
+wasmtime = "0.21.0"
+wasmtime-wasi = "0.21.0"
+anyhow = "1.0"

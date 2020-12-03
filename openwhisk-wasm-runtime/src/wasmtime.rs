@@ -100,10 +100,8 @@ mod tests {
     use super::execute_wasm;
 
     #[test]
-    fn test_pass_str() {
-        let wasm_bytes = include_bytes!(
-            "../../testfns-openwhisk/str_pass/target/wasm32-unknown-unknown/release/str_pass.wasm"
-        );
+    fn test_can_call_simple_add() {
+        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasm");
 
         let res = execute_wasm(
             serde_json::json!({"param1": 5, "param2": 4}),
@@ -121,10 +119,8 @@ mod tests {
     }
 
     #[test]
-    fn test_add_fail() {
-        let wasm_bytes = include_bytes!(
-            "../../testfns-openwhisk/str_pass/target/wasm32-unknown-unknown/release/str_pass.wasm"
-        );
+    fn test_add_error_is_correctly_returned() {
+        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasm");
 
         let res = execute_wasm(serde_json::json!({"param1": 5}), &wasm_bytes.to_vec())
             .unwrap()
@@ -140,9 +136,8 @@ mod tests {
 
     #[test]
     fn test_can_execute_wasm32_wasi_module() {
-        let wasm_bytes = include_bytes!(
-            "../../testfns-openwhisk/wasi_println/target/wasm32-wasi/release/wasi_println.wasm"
-        );
+        let wasm_bytes =
+            include_bytes!("../../target/wasm32-wasi/release/examples/println-wasi.wasm");
 
         let res = execute_wasm(serde_json::json!({"param": 5}), &wasm_bytes.to_vec())
             .unwrap()
