@@ -150,4 +150,27 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn test_can_execute_wasm32_wasi_clock_module() {
+        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/clock.wasm");
+
+        let res = execute_wasm(serde_json::json!({}), &wasm_bytes.to_vec())
+            .unwrap()
+            .unwrap();
+
+        assert!(res.get("elapsed").unwrap().as_u64().unwrap() > 0)
+    }
+
+    #[test]
+    fn test_can_execute_wasm32_wasi_random_module() {
+        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/random.wasm");
+
+        let res = execute_wasm(serde_json::json!({}), &wasm_bytes.to_vec())
+            .unwrap()
+            .unwrap();
+
+        let rand = res.get("random").unwrap().as_u64().unwrap();
+        assert!(rand > 0)
+    }
 }

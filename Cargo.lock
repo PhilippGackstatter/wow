@@ -2339,6 +2339,7 @@ name = "wasm-json"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "rand",
  "serde_json",
 ]
 
