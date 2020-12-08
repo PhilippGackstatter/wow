@@ -1,5 +1,5 @@
 use serde::{Deserialize, Deserializer, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug};
 
 #[derive(PartialEq, Clone)]
 pub enum ActivationResponseStatus {
@@ -63,13 +63,31 @@ pub struct ActivationInit {
     pub value: ActivationInitInner,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct ActivationInitInner {
     pub name: String,
     pub main: String,
     pub code: String,
     pub binary: bool,
     pub env: HashMap<String, String>,
+    pub annotations: ActionCapabilities,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ActionCapabilities {
+    pub dir: String,
+}
+
+impl Debug for ActivationInitInner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ActivationInitInner")
+            .field("name", &self.name)
+            .field("main", &self.main)
+            .field("binary", &self.binary)
+            .field("env", &self.env)
+            .field("annotations", &self.annotations)
+            .finish()
+    }
 }
 
 #[derive(Debug, Deserialize)]
