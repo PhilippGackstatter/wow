@@ -11,5 +11,3 @@ fn func(json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error> {
 
     Ok(serde_json::json!({ "result": param }))
 }
-
-fn main() {}

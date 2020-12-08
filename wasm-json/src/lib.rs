@@ -23,9 +23,18 @@ macro_rules! pass_json {
             }
         }
 
-        // Function to get the string from the buffer and add the text to it
         #[no_mangle]
-        pub fn wrapped_func(len: usize) -> usize {
+        pub fn get_wasm_memory_buffer_len() -> usize {
+            unsafe { MEMORY_BUFFER.len() }
+        }
+
+        pub fn main() {
+            let args: Vec<String> = std::env::args().collect();
+            if args.len() != 1 {
+                eprintln!("Expected 1 argument, got {}: {:?}", args.len(), args);
+                return;
+            }
+            let len: usize = args[0].parse().unwrap();
             let json = deserialize_slice(len);
 
             let result = $t(json);
@@ -38,14 +47,13 @@ macro_rules! pass_json {
 
             let mut result = serde_json::to_vec(&result).expect("Could not serialize result.");
 
-            serialize_vec(&mut result)
+            serialize_vec(&mut result);
         }
 
-        fn serialize_vec(vec: &mut Vec<u8>) -> usize {
+        fn serialize_vec(vec: &mut Vec<u8>) {
             unsafe {
                 MEMORY_BUFFER.clear();
                 MEMORY_BUFFER.append(vec);
-                MEMORY_BUFFER.len()
             }
         }
 

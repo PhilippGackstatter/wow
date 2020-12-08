@@ -73,9 +73,9 @@ pub struct ActivationInitInner {
     pub annotations: ActionCapabilities,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
 pub struct ActionCapabilities {
-    pub dir: String,
+    pub dir: Option<String>,
 }
 
 impl Debug for ActivationInitInner {
@@ -110,4 +110,9 @@ where
     let buf = String::deserialize(deserializer)?;
 
     buf.parse::<u64>().map_err(serde::de::Error::custom)
+}
+
+pub struct WasmAction {
+    pub code: Vec<u8>,
+    pub capabilities: ActionCapabilities,
 }

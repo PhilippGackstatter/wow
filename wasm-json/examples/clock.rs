@@ -9,5 +9,3 @@ fn func(_json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error> {
 
     Ok(serde_json::json!({ "elapsed": elapsed }))
 }
-
-fn main() {}

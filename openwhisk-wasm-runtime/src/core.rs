@@ -1,11 +1,11 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::types::{ActivationContext, ActivationInit, ActivationResponse};
+use crate::types::{ActivationContext, ActivationInit, ActivationResponse, WasmAction};
 use async_std::sync::RwLock;
 use serde::Serialize;
 use tide::{Request, StatusCode};
 
-type AtomicHashMap = Arc<RwLock<HashMap<String, Vec<u8>>>>;
+type AtomicHashMap = Arc<RwLock<HashMap<String, WasmAction>>>;
 
 #[derive(Serialize)]
 struct RuntimeResponse {
@@ -40,7 +40,12 @@ pub async fn init(mut req: Request<AtomicHashMap>) -> tide::Result<tide::StatusC
 
     let mut map = req.state().write().await;
 
-    map.insert(key, wasm_bytes);
+    let action = WasmAction {
+        code: wasm_bytes,
+        capabilities: activation_init.value.annotations,
+    };
+
+    map.insert(key, action);
 
     Ok(tide::StatusCode::Ok)
 }
@@ -52,12 +57,12 @@ pub async fn run(mut req: Request<AtomicHashMap>) -> tide::Result<serde_json::Va
 
     let map = req.state().write().await;
 
-    let wasm_bytes = map
+    let wasm_action = map
         .get(&activation_context.action_name)
         .ok_or_else(|| tide::Error::from_str(StatusCode::NotFound, "No action with that name"))?;
 
     // TODO: Don't try!, but pass error into ActivationRes. and use `ApplicationDeveloperError`
-    let response = crate::wasmtime::execute_wasm(activation_context.value, wasm_bytes);
+    let response = crate::wasmtime::execute_wasm(activation_context.value, wasm_action);
 
     println!("Wasm Execution returned {:?}", response);
 

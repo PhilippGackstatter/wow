@@ -1,12 +1,17 @@
-use std::ptr::slice_from_raw_parts;
+use std::{
+    fs::{DirBuilder, File},
+    ptr::slice_from_raw_parts,
+};
 
 use anyhow::anyhow;
 use wasmtime::*;
-use wasmtime_wasi::{Wasi, WasiCtxBuilder};
+use wasmtime_wasi::{Wasi, WasiCtx, WasiCtxBuilder};
+
+use crate::types::{ActionCapabilities, WasmAction};
 
 pub fn execute_wasm(
     parameters: serde_json::Value,
-    wasm_bytes: &Vec<u8>,
+    wasm_action: &WasmAction,
 ) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error> {
     let engine = Engine::default();
 
@@ -14,33 +19,46 @@ pub fn execute_wasm(
 
     let mut linker = Linker::new(&store);
 
-    let ctx = WasiCtxBuilder::new()
-        .inherit_stdout()
-        .inherit_stderr()
-        .build()?;
+    let json_bytes = serde_json::to_vec(&parameters).unwrap();
+
+    let ctx = build_wasi_context(&wasm_action.capabilities, json_bytes.len())?;
     let wasi = Wasi::new(&store, ctx);
     wasi.add_to_linker(&mut linker)?;
 
-    let module = Module::new(store.engine(), wasm_bytes)?;
+    let module = Module::new(store.engine(), &wasm_action.code)?;
 
     let instance = linker.instantiate(&module)?;
+    let main = linker.instance("", &instance)?.get_default("")?;
 
-    let main = instance
-        .get_func("wrapped_func")
-        .expect("The module did not export the expected `wrapped_func` function");
+    pass_string_arg(&instance, json_bytes)?;
 
-    let main = main.get1::<i32, i32>()?;
+    main.call(&[])?;
 
-    let len = pass_string_arg(&instance, &parameters)?;
-
-    let len: i32 = main(len as i32)?;
-
-    Ok(get_return_value(&instance, len as usize))
+    Ok(get_return_value(&instance))
 }
 
-fn pass_string_arg(instance: &Instance, json: &serde_json::Value) -> Result<usize, anyhow::Error> {
-    let json_bytes = serde_json::to_vec(json).unwrap();
+fn build_wasi_context(
+    capabilities: &ActionCapabilities,
+    arg_len: usize,
+) -> Result<WasiCtx, anyhow::Error> {
+    let mut ctx_builder = WasiCtxBuilder::new();
 
+    ctx_builder.inherit_stdout().inherit_stderr();
+    ctx_builder.arg(format!("{}", arg_len));
+
+    if let Some(dir) = &capabilities.dir {
+        // Can be made async
+
+        DirBuilder::new().recursive(true).create(dir).unwrap();
+        let dir_file = File::open(dir)?;
+
+        ctx_builder.preopened_dir(dir_file, dir);
+    }
+
+    Ok(ctx_builder.build()?)
+}
+
+fn pass_string_arg(instance: &Instance, json_bytes: Vec<u8>) -> Result<(), anyhow::Error> {
     let wasm_memory_buffer_allocate_space = instance
         .get_func("wasm_memory_buffer_allocate_space")
         .ok_or_else(|| {
@@ -68,13 +86,10 @@ fn pass_string_arg(instance: &Instance, json: &serde_json::Value) -> Result<usiz
             .copy_from_nonoverlapping(json_bytes.as_ptr(), json_bytes.len());
     }
 
-    Ok(json_bytes.len())
+    Ok(())
 }
 
-fn get_return_value(
-    instance: &Instance,
-    len: usize,
-) -> Result<serde_json::Value, serde_json::Value> {
+fn get_return_value(instance: &Instance) -> Result<serde_json::Value, serde_json::Value> {
     // We can unwrap here, because we handled these exact errors earlier
     // so we wouldn't reach this point if the functions wouldn't exist.
     let memory_ptr_func = instance
@@ -83,13 +98,21 @@ fn get_return_value(
         .get0::<i32>()
         .unwrap();
 
+    let memory_buf_len_func = instance
+        .get_func("get_wasm_memory_buffer_len")
+        .unwrap()
+        .get0::<i32>()
+        .unwrap();
+
+    let memory_buf_len = memory_buf_len_func().unwrap();
+
     let memory_ptr_offset = memory_ptr_func().unwrap();
 
     let memory_base_ptr = instance.get_memory("memory").unwrap().data_ptr();
 
     let wasm_mem_slice = slice_from_raw_parts(
         unsafe { memory_base_ptr.offset(memory_ptr_offset as isize) as *const u8 },
-        len,
+        memory_buf_len as usize,
     );
 
     serde_json::from_slice(unsafe { &*wasm_mem_slice }).unwrap()
@@ -97,18 +120,22 @@ fn get_return_value(
 
 #[cfg(test)]
 mod tests {
+    use crate::types::{ActionCapabilities, WasmAction};
+
     use super::execute_wasm;
 
     #[test]
     fn test_can_call_simple_add() {
         let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasm");
 
-        let res = execute_wasm(
-            serde_json::json!({"param1": 5, "param2": 4}),
-            &wasm_bytes.to_vec(),
-        )
-        .unwrap()
-        .unwrap();
+        let wasm_action = WasmAction {
+            code: wasm_bytes.to_vec(),
+            capabilities: ActionCapabilities::default(),
+        };
+
+        let res = execute_wasm(serde_json::json!({"param1": 5, "param2": 4}), &wasm_action)
+            .unwrap()
+            .unwrap();
 
         assert_eq!(
             res,
@@ -122,7 +149,12 @@ mod tests {
     fn test_add_error_is_correctly_returned() {
         let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasm");
 
-        let res = execute_wasm(serde_json::json!({"param1": 5}), &wasm_bytes.to_vec())
+        let wasm_action = WasmAction {
+            code: wasm_bytes.to_vec(),
+            capabilities: ActionCapabilities::default(),
+        };
+
+        let res = execute_wasm(serde_json::json!({"param1": 5}), &wasm_action)
             .unwrap()
             .unwrap_err();
 
@@ -139,7 +171,12 @@ mod tests {
         let wasm_bytes =
             include_bytes!("../../target/wasm32-wasi/release/examples/println-wasi.wasm");
 
-        let res = execute_wasm(serde_json::json!({"param": 5}), &wasm_bytes.to_vec())
+        let wasm_action = WasmAction {
+            code: wasm_bytes.to_vec(),
+            capabilities: ActionCapabilities::default(),
+        };
+
+        let res = execute_wasm(serde_json::json!({"param": 5}), &wasm_action)
             .unwrap()
             .unwrap();
 
@@ -155,7 +192,12 @@ mod tests {
     fn test_can_execute_wasm32_wasi_clock_module() {
         let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/clock.wasm");
 
-        let res = execute_wasm(serde_json::json!({}), &wasm_bytes.to_vec())
+        let wasm_action = WasmAction {
+            code: wasm_bytes.to_vec(),
+            capabilities: ActionCapabilities::default(),
+        };
+
+        let res = execute_wasm(serde_json::json!({}), &wasm_action)
             .unwrap()
             .unwrap();
 
@@ -166,11 +208,39 @@ mod tests {
     fn test_can_execute_wasm32_wasi_random_module() {
         let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/random.wasm");
 
-        let res = execute_wasm(serde_json::json!({}), &wasm_bytes.to_vec())
+        let wasm_action = WasmAction {
+            code: wasm_bytes.to_vec(),
+            capabilities: ActionCapabilities::default(),
+        };
+
+        let res = execute_wasm(serde_json::json!({}), &wasm_action)
             .unwrap()
             .unwrap();
 
         let rand = res.get("random").unwrap().as_u64().unwrap();
         assert!(rand > 0)
+    }
+
+    #[test]
+    fn test_can_execute_wasm32_wasi_filesystem_module() {
+        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/filesys.wasm");
+
+        let wasm_action = WasmAction {
+            code: wasm_bytes.to_vec(),
+            capabilities: ActionCapabilities {
+                dir: Some("/tmp/filesys".into()),
+            },
+        };
+
+        let res = execute_wasm(serde_json::json!({}), &wasm_action)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            res,
+            serde_json::json!({
+                "content": "Hello, Wasm."
+            })
+        );
     }
 }
