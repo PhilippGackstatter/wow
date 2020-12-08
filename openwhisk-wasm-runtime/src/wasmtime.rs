@@ -1,10 +1,12 @@
 use std::{
     fs::{DirBuilder, File},
+    io::Write,
     ptr::slice_from_raw_parts,
+    time::Instant,
 };
 
 use anyhow::anyhow;
-use wasmtime::*;
+use wasmtime::{Config, Engine, Instance, Linker, Module, Store};
 use wasmtime_wasi::{Wasi, WasiCtx, WasiCtxBuilder};
 
 use crate::types::{ActionCapabilities, WasmAction};
@@ -13,7 +15,8 @@ pub fn execute_wasm(
     parameters: serde_json::Value,
     wasm_action: &WasmAction,
 ) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error> {
-    let engine = Engine::default();
+    let config = make_wasmtime_config()?;
+    let engine = Engine::new(&config);
 
     let store = Store::new(&engine);
 
@@ -25,7 +28,12 @@ pub fn execute_wasm(
     let wasi = Wasi::new(&store, ctx);
     wasi.add_to_linker(&mut linker)?;
 
+    let timestamp = Instant::now();
     let module = Module::new(store.engine(), &wasm_action.code)?;
+    println!(
+        "Module instantiation took {}ms",
+        timestamp.elapsed().as_millis()
+    );
 
     let instance = linker.instantiate(&module)?;
     let main = linker.instance("", &instance)?.get_default("")?;
@@ -116,6 +124,30 @@ fn get_return_value(instance: &Instance) -> Result<serde_json::Value, serde_json
     );
 
     serde_json::from_slice(unsafe { &*wasm_mem_slice }).unwrap()
+}
+
+fn make_wasmtime_config() -> anyhow::Result<Config> {
+    let mut config = Config::default();
+
+    make_cache_config(&mut config)?;
+
+    Ok(config)
+}
+
+fn make_cache_config(config: &mut Config) -> anyhow::Result<()> {
+    let cache_config_toml = r#"
+        [cache]
+        enabled = true
+        directory = "/tmp/wasmtime-cache/"
+        files-total-size-soft-limit = "256Mi"
+        "#;
+
+    let mut file = tempfile::NamedTempFile::new()?;
+    file.write_all(cache_config_toml.as_bytes())?;
+
+    config.cache_config_load(file.path())?;
+
+    Ok(())
 }
 
 #[cfg(test)]
