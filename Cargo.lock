@@ -2368,6 +2368,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasm_precompiler"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "wasmtime",
+]
+
+[[package]]
 name = "wasmparser"
 version = "0.57.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

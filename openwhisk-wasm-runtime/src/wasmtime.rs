@@ -29,7 +29,10 @@ pub fn execute_wasm(
     wasi.add_to_linker(&mut linker)?;
 
     let timestamp = Instant::now();
+
     let module = Module::new(store.engine(), &wasm_action.code)?;
+    // let module = Module::deserialize(store.engine(), &wasm_action.code)?;
+
     println!(
         "Module instantiation took {}ms",
         timestamp.elapsed().as_millis()
@@ -152,6 +155,8 @@ fn make_cache_config(config: &mut Config) -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Instant;
+
     use crate::types::{ActionCapabilities, WasmAction};
 
     use super::execute_wasm;
@@ -176,6 +181,32 @@ mod tests {
             })
         );
     }
+
+    // #[test]
+    // fn test_can_call_precompiled_add() {
+    //     let precompiled_wasm =
+    //         include_bytes!("../../target/wasm32-wasi/release/examples/add.wasmtime");
+
+    //     let wasm_action = WasmAction {
+    //         code: precompiled_wasm.to_vec(),
+    //         capabilities: ActionCapabilities::default(),
+    //     };
+
+    //     let timestamp = Instant::now();
+
+    //     let res = execute_wasm(serde_json::json!({"param1": 5, "param2": 4}), &wasm_action)
+    //         .unwrap()
+    //         .unwrap();
+
+    //     println!("execute wasm took {}ms", timestamp.elapsed().as_millis());
+
+    //     assert_eq!(
+    //         res,
+    //         serde_json::json!({
+    //             "result": 9
+    //         })
+    //     );
+    // }
 
     #[test]
     fn test_add_error_is_correctly_returned() {
@@ -208,9 +239,13 @@ mod tests {
             capabilities: ActionCapabilities::default(),
         };
 
+        let timestamp = Instant::now();
+
         let res = execute_wasm(serde_json::json!({"param": 5}), &wasm_action)
             .unwrap()
             .unwrap();
+
+        println!("execute wasm took {}ms", timestamp.elapsed().as_millis());
 
         assert_eq!(
             res,
