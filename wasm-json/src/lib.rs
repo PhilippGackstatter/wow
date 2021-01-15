@@ -30,11 +30,15 @@ macro_rules! pass_json {
 
         pub fn main() {
             let args: Vec<String> = std::env::args().collect();
-            if args.len() != 1 {
-                eprintln!("Expected 1 argument, got {}: {:?}", args.len(), args);
+
+            // wasmer automatically passes the program name as the first arg
+            // while wasmtime does not force that, so we just take the last one
+            if args.len() > 2 {
+                eprintln!("Expected 1 or 2 arguments, got {}: {:?}", args.len(), args);
                 return;
             }
-            let len: usize = args[0].parse().unwrap();
+
+            let len: usize = args[args.len() - 1].parse().unwrap();
             let json = deserialize_slice(len);
 
             let result = $t(json);
