@@ -5,9 +5,10 @@ use clap::{App, Arg};
 use wasm_precompiler::precompile;
 
 pub fn precompile_wasmer(filename: &str) -> anyhow::Result<Vec<u8>> {
-    let compiler = wasmer_compiler_llvm::LLVM::default();
+    let compiler = wasmer::LLVM::default();
 
-    let store = wasmer::Store::new(&wasmer::JIT::new(compiler).engine());
+    // let store = wasmer::Store::new(&wasmer::JIT::new(compiler).engine());
+    let store = wasmer::Store::new(&wasmer::Native::new(compiler).engine());
 
     let before = Instant::now();
     let module = wasmer::Module::from_file(&store, filename)?;

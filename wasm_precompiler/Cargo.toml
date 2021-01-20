@@ -9,6 +9,6 @@ edition = "2018"
 [dependencies]
 wasmtime = "0.21.0"
 anyhow = "1.0"
-wasmer = "1.0"
+wasmer = { version = "1.0", features = ["native", "llvm", "jit"] }
 wasmer-compiler-llvm = "1.0"
 clap = "2.33"
