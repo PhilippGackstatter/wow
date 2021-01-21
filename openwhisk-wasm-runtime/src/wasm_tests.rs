@@ -1,3 +1,4 @@
+/*
 macro_rules! test_runtime {
     ($mod_name:ident, $exec_wasm:path) => {
 
@@ -134,6 +135,79 @@ macro_rules! test_runtime {
     }
     }
 }
+*/
+// #[cfg(all(test, feature = "wasmer_rt"))]
+// test_runtime!(wasmer_tests, super::super::wasmer::execute_wasm);
+// test_runtime!(wasmtime_tests, super::super::wasmtime::execute_wasm);
 
-test_runtime!(wasmer_tests, super::super::wasmer::execute_wasm);
-test_runtime!(wasmtime_tests, super::super::wasmtime::execute_wasm);
+// Runtime-specific tests
+
+#[cfg(all(test, feature = "wasmer_rt"))]
+mod wasmer_specific_tests {
+
+    use std::time::Instant;
+
+    use crate::types::{ActionCapabilities, WasmAction};
+
+    use super::super::wasmer;
+
+    #[test]
+    fn wasmer_test_can_call_precompiled_add() {
+        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasmer");
+
+        let wasm_action = WasmAction {
+            code: wasm_bytes.to_vec(),
+            capabilities: ActionCapabilities::default(),
+        };
+        let timestamp = Instant::now();
+
+        let res = wasmer::execute_wasm(serde_json::json!({"param1": 5, "param2": 4}), &wasm_action)
+            .unwrap()
+            .unwrap();
+
+        println!("execute wasm took {}ms", timestamp.elapsed().as_millis());
+
+        assert_eq!(
+            res,
+            serde_json::json!({
+                "result": 9
+            })
+        );
+    }
+}
+
+#[cfg(all(test, feature = "wasmtime_rt"))]
+mod wasmtime_specific_tests {
+
+    use std::time::Instant;
+
+    use crate::types::{ActionCapabilities, WasmAction};
+
+    use super::super::wasmtime;
+
+    #[test]
+    fn wasmtime_test_can_call_precompiled_add() {
+        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasmtime");
+
+        let wasm_action = WasmAction {
+            code: wasm_bytes.to_vec(),
+            capabilities: ActionCapabilities::default(),
+        };
+
+        let timestamp = Instant::now();
+
+        let res =
+            wasmtime::execute_wasm(serde_json::json!({"param1": 5, "param2": 4}), &wasm_action)
+                .unwrap()
+                .unwrap();
+
+        println!("execute wasm took {}ms", timestamp.elapsed().as_millis());
+
+        assert_eq!(
+            res,
+            serde_json::json!({
+                "result": 9
+            })
+        );
+    }
+}

@@ -2773,6 +2773,7 @@ dependencies = [
  "thiserror",
  "wasmer-compiler",
  "wasmer-compiler-cranelift",
+ "wasmer-compiler-llvm",
  "wasmer-derive",
  "wasmer-engine",
  "wasmer-engine-jit",

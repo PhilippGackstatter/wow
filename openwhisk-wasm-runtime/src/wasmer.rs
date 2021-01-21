@@ -1,6 +1,6 @@
 use std::{ptr::slice_from_raw_parts, time::Instant};
 
-use wasmer::{Instance, Module, Store};
+use wasmer::{Instance, Module};
 use wasmer_wasi::{WasiEnv, WasiState};
 
 use crate::types::{ActionCapabilities, WasmAction};
@@ -9,11 +9,14 @@ pub fn execute_wasm(
     parameters: serde_json::Value,
     wasm_action: &WasmAction,
 ) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error> {
-    let store = Store::default();
+    let store = wasmer::Store::new(&wasmer::Native::headless().engine());
 
     let before = Instant::now();
-    let module = Module::new(&store, &wasm_action.code)?;
-    println!("wasmer compiling took {}ms", before.elapsed().as_millis());
+    let module = unsafe { Module::deserialize(&store, &wasm_action.code)? };
+    println!(
+        "wasmer deserializing took {}ms",
+        before.elapsed().as_millis()
+    );
 
     let json_bytes = serde_json::to_vec(&parameters).unwrap();
 

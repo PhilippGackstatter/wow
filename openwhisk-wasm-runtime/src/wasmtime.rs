@@ -30,8 +30,8 @@ pub fn execute_wasm(
 
     let timestamp = Instant::now();
 
-    let module = Module::new(store.engine(), &wasm_action.code)?;
-    // let module = Module::deserialize(store.engine(), &wasm_action.code)?;
+    // let module = Module::new(store.engine(), &wasm_action.code)?;
+    let module = Module::deserialize(store.engine(), &wasm_action.code)?;
 
     println!(
         "wasmtime compiling took {}ms",

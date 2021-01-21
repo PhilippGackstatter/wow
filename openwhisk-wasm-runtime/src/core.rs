@@ -62,6 +62,9 @@ pub async fn run(mut req: Request<AtomicHashMap>) -> tide::Result<serde_json::Va
         .ok_or_else(|| tide::Error::from_str(StatusCode::NotFound, "No action with that name"))?;
 
     // TODO: Don't try!, but pass error into ActivationRes. and use `ApplicationDeveloperError`
+    #[cfg(feature = "wasmer_rt")]
+    let response = crate::wasmer::execute_wasm(activation_context.value, wasm_action);
+    #[cfg(feature = "wasmtime_rt")]
     let response = crate::wasmtime::execute_wasm(activation_context.value, wasm_action);
 
     println!("Wasm Execution returned {:?}", response);
