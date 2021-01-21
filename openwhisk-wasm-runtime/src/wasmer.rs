@@ -1,4 +1,4 @@
-use std::{ptr::slice_from_raw_parts, time::Instant};
+use std::{fs, path::Path, ptr::slice_from_raw_parts, time::Instant};
 
 use wasmer::{Instance, Module};
 use wasmer_wasi::{WasiEnv, WasiState};
@@ -44,7 +44,11 @@ fn build_wasi_env(
     builder.arg(format!("{}", arg_len));
 
     if let Some(dir) = &capabilities.dir {
-        builder.preopen_dir(dir)?;
+        if !Path::new(dir).exists() {
+            fs::create_dir_all(dir)?;
+        }
+
+        builder.preopen(|p| p.directory(dir).read(true).write(true).create(true))?;
     }
 
     Ok(builder.finalize()?)
