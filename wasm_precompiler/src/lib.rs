@@ -1,5 +1,22 @@
 use anyhow;
+use clap::{App, Arg};
 use std::{fs::File, io::prelude::*, path::Path};
+
+pub fn get_filenames<'a>() -> Vec<String> {
+    let matches = App::new("Wasm Precompiler")
+        .version("0.1")
+        .author("Philipp Gackstatter")
+        .about("Precompiles Wasm modules to runtime-specific code")
+        .arg(
+            Arg::with_name("INPUT")
+                .help("Sets the input file(s) to use")
+                .required(true)
+                .multiple(true),
+        )
+        .get_matches();
+
+    matches.values_of_lossy("INPUT").unwrap()
+}
 
 pub fn precompile<F: FnOnce(&str) -> anyhow::Result<Vec<u8>>>(
     filename: &str,

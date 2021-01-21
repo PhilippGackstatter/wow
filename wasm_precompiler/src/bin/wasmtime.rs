@@ -1,8 +1,7 @@
 use std::time::Instant;
 
 use anyhow;
-use clap::{App, Arg};
-use wasm_precompiler::precompile;
+use wasm_precompiler::{get_filenames, precompile};
 
 pub fn precompile_wasmtime(filename: &str) -> anyhow::Result<Vec<u8>> {
     let store = wasmtime::Store::default();
@@ -17,19 +16,11 @@ pub fn precompile_wasmtime(filename: &str) -> anyhow::Result<Vec<u8>> {
 }
 
 fn main() -> anyhow::Result<()> {
-    let matches = App::new("Wasmtime Precompiler")
-        .version("0.1")
-        .author("Philipp Gackstatter")
-        .about("Precompiles Wasm modules to runtime-specific code")
-        .arg(
-            Arg::with_name("INPUT")
-                .help("Sets the input file to use")
-                .required(true)
-                .index(1),
-        )
-        .get_matches();
+    let filenames = get_filenames();
 
-    let filename = matches.value_of("INPUT").unwrap();
+    for filename in filenames {
+        precompile(&filename, precompile_wasmtime, "wasmtime")?;
+    }
 
-    precompile(filename, precompile_wasmtime, "wasmtime")
+    Ok(())
 }
