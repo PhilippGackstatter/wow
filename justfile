@@ -7,6 +7,10 @@ build:
 
 build-examples:
     cargo build --release --examples --target wasm32-wasi
+    ../binaryen/bin/wasm-opt -O4 -o target/wasm32-wasi/release/examples/add.wasm target/wasm32-wasi/release/examples/add.wasm
+    ../binaryen/bin/wasm-opt -O4 -o target/wasm32-wasi/release/examples/clock.wasm target/wasm32-wasi/release/examples/clock.wasm
+    ../binaryen/bin/wasm-opt -O4 -o target/wasm32-wasi/release/examples/filesys.wasm target/wasm32-wasi/release/examples/filesys.wasm
+    ../binaryen/bin/wasm-opt -O4 -o target/wasm32-wasi/release/examples/random.wasm target/wasm32-wasi/release/examples/random.wasm
 
 precompile:
     cd wasm_precompiler
