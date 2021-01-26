@@ -13,15 +13,18 @@ path = "src/bin/wasmruntime.rs"
 [dependencies]
 async-std = { version = "1.6.3", features = ["unstable", "attributes"] }
 tide = "0.15.0"
+tracing = "0.1"
+tide-tracing = "0.0.7"
 async-trait = "0.1.40"
 serde_json = "1.0.57"
 serde = { version = "1.0", features = ["derive"] }
 wasmtime = "0.21.0"
 wasmtime-wasi = "0.21.0"
-wasmer =  { version = "1.0", features = ["native"]}
+wasmer = { version = "1.0", features = ["native"] }
 wasmer-wasi = "1.0"
 anyhow = "1.0"
 tempfile = "3.1.0"
+tracing-subscriber = "0.2"
 
 [features]
 wasmtime_rt = []
