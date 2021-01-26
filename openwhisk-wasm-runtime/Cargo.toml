@@ -25,6 +25,7 @@ wasmer-wasi = "1.0"
 anyhow = "1.0"
 tempfile = "3.1.0"
 tracing-subscriber = "0.2"
+base64 = "0.13.0"
 
 [features]
 wasmtime_rt = []

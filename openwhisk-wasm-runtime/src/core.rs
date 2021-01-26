@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Instant};
 
 use crate::types::{ActivationContext, ActivationInit, ActivationResponse, WasmAction};
 use async_std::sync::RwLock;
@@ -26,11 +26,20 @@ pub async fn start(mut _req: Request<AtomicHashMap>) -> tide::Result<serde_json:
 }
 
 pub async fn init(mut req: Request<AtomicHashMap>) -> tide::Result<tide::StatusCode> {
-    let activation_init: ActivationInit = req.body_json().await?;
+    let activation_init = req.body_json().await;
+
+    if let Err(err) = &activation_init {
+        println!("/init err: {:?}", err);
+    }
+
+    let activation_init: ActivationInit = activation_init?;
 
     println!("/init {:#?}", activation_init);
 
-    let wasm_bytes = activation_init.value.code.into();
+    let time = Instant::now();
+    let wasm_bytes: Vec<u8> = base64::decode(activation_init.value.code)?;
+    println!("base64 decoding took {}µs", time.elapsed().as_micros());
+
     let key = activation_init
         .value
         .env
