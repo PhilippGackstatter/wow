@@ -48,7 +48,9 @@ fn write_precompiled(
 
     let mut file = File::create(new_filepath)?;
 
-    file.write(&precompiled)?;
+    let binary_as_text = base64::encode(precompiled);
+
+    file.write(binary_as_text.as_bytes())?;
 
     Ok(())
 }
