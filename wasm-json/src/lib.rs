@@ -105,3 +105,40 @@ fn timestamp() -> f64 {
         .expect("Time went backwards.")
         .as_secs_f64()
 }
+
+#[macro_export]
+macro_rules! json_args {
+    ($($t:ident)*) => ($(
+
+    pub fn main() -> anyhow::Result<()> {
+        let json: serde_json::Value = match std::env::args().nth(1) {
+            Some(json_str) => Ok(serde_json::from_str(&json_str)?),
+            None => {
+                println!(
+                    "{}",
+                    serde_json::json!({
+                        "message": "No input provided",
+                    })
+                );
+
+                Err(anyhow::anyhow!(""))
+            }
+        }?;
+
+        let result: anyhow::Result<serde_json::Value> = $crate::wrap_timestamped(json, $t);
+
+        match result {
+            Ok(success) => {
+                println!("{}", success);
+            }
+            Err(err) => {
+                println!("{}", serde_json::json!({
+                    "message": err.to_string(),
+                }));
+            }
+        }
+
+        Ok(())
+    }
+    )*)
+}

@@ -1,11 +1,15 @@
 use std::fs::File;
 use std::io::prelude::*;
 
+#[cfg(feature = "wasm")]
 wasm_json::pass_json!(func);
+
+#[cfg(feature = "bin")]
+wasm_json::json_args!(func);
 
 // Needs to be created with --annotation dir "/tmp/filesys"
 
-fn func(_json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error> {
+pub fn func(_json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error> {
     {
         let mut file = File::create("/tmp/filesys/test.txt").unwrap();
 

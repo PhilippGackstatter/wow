@@ -1,6 +1,10 @@
+#[cfg(feature = "wasm")]
 wasm_json::pass_json!(func);
 
-fn func(json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error> {
+#[cfg(feature = "bin")]
+wasm_json::json_args!(func);
+
+pub fn func(json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error> {
     let param1 = json
         .get("param1")
         .ok_or(anyhow::anyhow!("Expected param1."))?
