@@ -1,8 +1,11 @@
+use serde_json::{Map, Value};
+
 // Expects to be called on a function with the signature
 // (json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error>
 #[macro_export]
 macro_rules! pass_json {
     ($($t:ident)*) => ($(
+
         static mut MEMORY_BUFFER: Vec<u8> = Vec::new();
 
         // Function to return a pointer to our buffer
@@ -41,7 +44,7 @@ macro_rules! pass_json {
             let len: usize = args[args.len() - 1].parse().unwrap();
             let json = deserialize_slice(len);
 
-            let result = $t(json);
+            let result = $crate::wrap_timestamped(json, $t);
 
             let result = result.map_err(|err: anyhow::Error| {
                 let err_string = err.to_string();
@@ -65,5 +68,40 @@ macro_rules! pass_json {
             let slice = unsafe { &MEMORY_BUFFER[..len] };
             serde_json::from_slice(slice).expect("Could not deserialize slice")
         }
+
+
+
+
     )*)
+}
+
+pub fn wrap_timestamped<F>(
+    _json: serde_json::Value,
+    func: F,
+) -> Result<serde_json::Value, anyhow::Error>
+where
+    F: FnOnce(serde_json::Value) -> Result<serde_json::Value, anyhow::Error>,
+{
+    let entry_at = timestamp();
+
+    let result = func(_json);
+
+    let exit_at = timestamp();
+
+    result.map(|json| {
+        let mut map = Map::new();
+        map.insert("result".to_owned(), json.get("result").unwrap().to_owned());
+        map.insert("entry_at".to_owned(), serde_json::json!(entry_at));
+        map.insert("exit_at".to_owned(), serde_json::json!(exit_at));
+        Value::Object(map)
+    })
+}
+
+fn timestamp() -> f64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards.")
+        .as_secs_f64()
 }
