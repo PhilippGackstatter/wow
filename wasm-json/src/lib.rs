@@ -1,4 +1,4 @@
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 // Expects to be called on a function with the signature
 // (json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error>
@@ -89,11 +89,13 @@ where
     let exit_at = timestamp();
 
     result.map(|json| {
-        let mut map = Map::new();
-        map.insert("result".to_owned(), json.get("result").unwrap().to_owned());
-        map.insert("entry_at".to_owned(), serde_json::json!(entry_at));
-        map.insert("exit_at".to_owned(), serde_json::json!(exit_at));
-        Value::Object(map)
+        if let Value::Object(mut map) = json {
+            map.insert("entry_at".to_owned(), serde_json::json!(entry_at));
+            map.insert("exit_at".to_owned(), serde_json::json!(exit_at));
+            Value::Object(map)
+        } else {
+            panic!("Expected a JSON Object as result.");
+        }
     })
 }
 
