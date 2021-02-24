@@ -18,14 +18,17 @@ tide-tracing = "0.0.7"
 async-trait = "0.1.40"
 serde_json = "1.0.57"
 serde = { version = "1.0", features = ["derive"] }
-wasmtime = "0.21.0"
-wasmtime-wasi = "0.21.0"
+cap-std = "0.13.6"
+wasmtime = "0.23.0"
+wasmtime-wasi = "0.23.0"
+wasi-cap-std-sync = "0.23.0"
 wasmer = { version = "1.0", features = ["native"] }
 wasmer-wasi = "1.0"
 anyhow = "1.0"
 tempfile = "3.1.0"
 tracing-subscriber = "0.2"
 base64 = "0.13.0"
+dashmap = "4.0.2"
 
 [features]
 wasmtime_rt = []

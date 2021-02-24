@@ -1,11 +1,8 @@
-use std::{collections::HashMap, sync::Arc, time::Instant};
+use std::time::Instant;
 
-use crate::types::{ActivationContext, ActivationInit, ActivationResponse, WasmAction};
-use async_std::sync::RwLock;
+use crate::types::{ActivationContext, ActivationInit, ActivationResponse, WasmRuntime};
 use serde::Serialize;
-use tide::{Request, StatusCode};
-
-type AtomicHashMap = Arc<RwLock<HashMap<String, WasmAction>>>;
+use tide::Request;
 
 #[derive(Serialize)]
 struct RuntimeResponse {
@@ -14,7 +11,7 @@ struct RuntimeResponse {
     port: i32,
 }
 
-pub async fn start(mut _req: Request<AtomicHashMap>) -> tide::Result<serde_json::Value> {
+pub async fn start(mut _req: Request<impl WasmRuntime>) -> tide::Result<serde_json::Value> {
     // println!("start called with {:#?}", req.body_string().await);
 
     let resp = RuntimeResponse {
@@ -25,7 +22,7 @@ pub async fn start(mut _req: Request<AtomicHashMap>) -> tide::Result<serde_json:
     Ok(serde_json::to_value(resp).unwrap())
 }
 
-pub async fn init(mut req: Request<AtomicHashMap>) -> tide::Result<tide::StatusCode> {
+pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<tide::StatusCode> {
     let activation_init = req.body_json().await;
 
     if let Err(err) = &activation_init {
@@ -37,48 +34,35 @@ pub async fn init(mut req: Request<AtomicHashMap>) -> tide::Result<tide::StatusC
     println!("/init {:#?}", activation_init);
 
     let time = Instant::now();
-    let wasm_bytes: Vec<u8> = base64::decode(activation_init.value.code)?;
+    let module_bytes: Vec<u8> = base64::decode(activation_init.value.code)?;
     println!("base64 decoding took {}µs", time.elapsed().as_micros());
 
-    let key = activation_init
+    let action_name = activation_init
         .value
         .env
         .get("__OW_ACTION_NAME")
         .unwrap()
         .clone();
 
-    let mut map = req.state().write().await;
+    let state = req.state();
 
-    let action = WasmAction {
-        code: wasm_bytes,
-        capabilities: activation_init.value.annotations,
-    };
-
-    map.insert(key, action);
+    state.initialize_action(action_name, activation_init.value.annotations, module_bytes)?;
 
     Ok(tide::StatusCode::Ok)
 }
 
-pub async fn run(mut req: Request<AtomicHashMap>) -> tide::Result<serde_json::Value> {
+pub async fn run(mut req: Request<impl WasmRuntime>) -> tide::Result<serde_json::Value> {
     let activation_context: ActivationContext = req.body_json().await?;
 
     println!("/run {:#?}", activation_context);
 
-    let map = req.state().write().await;
+    let runtime = req.state();
 
-    let wasm_action = map
-        .get(&activation_context.action_name)
-        .ok_or_else(|| tide::Error::from_str(StatusCode::NotFound, "No action with that name"))?;
+    let result = runtime.execute(&activation_context.action_name, activation_context.value);
 
-    // TODO: Don't try!, but pass error into ActivationRes. and use `ApplicationDeveloperError`
-    #[cfg(feature = "wasmer_rt")]
-    let response = crate::wasmer::execute_wasm(activation_context.value, wasm_action);
-    #[cfg(feature = "wasmtime_rt")]
-    let response = crate::wasmtime::execute_wasm(activation_context.value, wasm_action);
+    println!("Wasm Execution returned {:?}", result);
 
-    println!("Wasm Execution returned {:?}", response);
-
-    let response = ActivationResponse::new(response?);
+    let response = ActivationResponse::new(result?);
 
     Ok(serde_json::to_value(response).unwrap())
 }

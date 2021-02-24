@@ -2,50 +2,91 @@ use std::{
     fs::{DirBuilder, File},
     io::Write,
     ptr::slice_from_raw_parts,
+    sync::Arc,
     time::Instant,
 };
 
 use anyhow::anyhow;
+use cap_std::fs::Dir;
+use dashmap::DashMap;
+use wasi_cap_std_sync::WasiCtxBuilder;
 use wasmtime::{Config, Engine, Instance, Linker, Module, Store};
-use wasmtime_wasi::{Wasi, WasiCtx, WasiCtxBuilder};
+use wasmtime_wasi::{Wasi, WasiCtx};
 
-use crate::types::{ActionCapabilities, WasmAction};
+use crate::types::{ActionCapabilities, WasmAction, WasmRuntime};
 
-pub fn execute_wasm(
-    parameters: serde_json::Value,
-    wasm_action: &WasmAction,
-) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error> {
-    let config = make_wasmtime_config()?;
-    let engine = Engine::new(&config);
+#[derive(Clone)]
+pub struct Wasmtime {
+    pub engine: Engine,
+    pub modules: Arc<DashMap<String, WasmAction>>,
+}
 
-    let store = Store::new(&engine);
+impl Default for Wasmtime {
+    fn default() -> Self {
+        Self {
+            engine: Engine::new(&make_wasmtime_config().unwrap()),
+            modules: Arc::new(DashMap::new()),
+        }
+    }
+}
 
-    let mut linker = Linker::new(&store);
+impl WasmRuntime for Wasmtime {
+    fn initialize_action(
+        &self,
+        action_name: String,
+        capabilities: ActionCapabilities,
+        module_bytes: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        let module = Module::deserialize(&self.engine, &module_bytes)?;
 
-    let json_bytes = serde_json::to_vec(&parameters).unwrap();
+        let action = WasmAction {
+            module,
+            capabilities,
+        };
 
-    let ctx = build_wasi_context(&wasm_action.capabilities, json_bytes.len())?;
-    let wasi = Wasi::new(&store, ctx);
-    wasi.add_to_linker(&mut linker)?;
+        self.modules.insert(action_name, action);
 
-    let timestamp = Instant::now();
+        Ok(())
+    }
 
-    // let module = Module::new(store.engine(), &wasm_action.code)?;
-    let module = Module::deserialize(store.engine(), &wasm_action.code)?;
+    fn execute(
+        &self,
+        action_name: &str,
+        parameters: serde_json::Value,
+    ) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error> {
+        let store = Store::new(&self.engine);
 
-    println!(
-        "wasmtime compiling took {}ms",
-        timestamp.elapsed().as_millis()
-    );
+        let mut linker = Linker::new(&store);
 
-    let instance = linker.instantiate(&module)?;
-    let main = linker.instance("", &instance)?.get_default("")?;
+        let json_bytes = serde_json::to_vec(&parameters).unwrap();
 
-    pass_string_arg(&instance, json_bytes)?;
+        let wasm_action = self
+            .modules
+            .get(action_name)
+            .ok_or_else(|| anyhow!(format!("No action named {}", action_name)))?;
 
-    main.call(&[])?;
+        let ctx = build_wasi_context(&wasm_action.capabilities, json_bytes.len())?;
+        let wasi = Wasi::new(&store, ctx);
+        wasi.add_to_linker(&mut linker)?;
 
-    Ok(get_return_value(&instance))
+        let timestamp = Instant::now();
+
+        let module = &wasm_action.module;
+
+        println!(
+            "wasmtime compiling took {}ms",
+            timestamp.elapsed().as_millis()
+        );
+
+        let instance = linker.instantiate(module)?;
+        let main = linker.instance("", &instance)?.get_default("")?;
+
+        pass_string_arg(&instance, json_bytes)?;
+
+        main.call(&[])?;
+
+        Ok(get_return_value(&instance))
+    }
 }
 
 fn build_wasi_context(
@@ -54,16 +95,19 @@ fn build_wasi_context(
 ) -> Result<WasiCtx, anyhow::Error> {
     let mut ctx_builder = WasiCtxBuilder::new();
 
-    ctx_builder.inherit_stdout().inherit_stderr();
-    ctx_builder.arg(format!("{}", arg_len));
+    ctx_builder = ctx_builder
+        .inherit_stdout()
+        .inherit_stderr()
+        .arg(&format!("{}", arg_len))?;
 
     if let Some(dir) = &capabilities.dir {
         // Can be made async
 
         DirBuilder::new().recursive(true).create(dir).unwrap();
-        let dir_file = File::open(dir)?;
 
-        ctx_builder.preopened_dir(dir_file, dir);
+        let cap_dir = unsafe { Dir::from_std_file(File::open(dir)?) };
+
+        ctx_builder = ctx_builder.preopened_dir(cap_dir, dir)?;
     }
 
     Ok(ctx_builder.build()?)
@@ -129,7 +173,7 @@ fn get_return_value(instance: &Instance) -> Result<serde_json::Value, serde_json
     serde_json::from_slice(unsafe { &*wasm_mem_slice }).unwrap()
 }
 
-fn make_wasmtime_config() -> anyhow::Result<Config> {
+pub fn make_wasmtime_config() -> anyhow::Result<Config> {
     let mut config = Config::default();
 
     make_cache_config(&mut config)?;

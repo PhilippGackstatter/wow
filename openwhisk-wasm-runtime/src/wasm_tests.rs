@@ -1,4 +1,7 @@
-use crate::types::WasmAction;
+use crate::{
+    types::{ActionCapabilities, WasmRuntime},
+    wasmtime::Wasmtime,
+};
 
 /*
 macro_rules! test_runtime {
@@ -145,14 +148,27 @@ macro_rules! test_runtime {
 // Runtime-specific tests
 
 pub fn execute_precompiled_wasm(
-    wasm_action: WasmAction,
+    module_bytes: &[u8],
+    capabilities: ActionCapabilities,
     input: serde_json::Value,
 ) -> Result<serde_json::Value, serde_json::Value> {
-    #[cfg(all(feature = "wasmer_rt"))]
-    let result = super::wasmer::execute_wasm(input, &wasm_action).unwrap();
+    let module_bytes: Vec<u8> = base64::decode(module_bytes).unwrap();
 
     #[cfg(all(feature = "wasmtime_rt"))]
-    let result = super::wasmtime::execute_wasm(input, &wasm_action).unwrap();
+    let runtime = Wasmtime::default();
+
+    // #[cfg(all(feature = "wasmer_rt"))]
+    // let runtime = ...
+
+    runtime
+        .initialize_action(
+            "action_name".to_owned(),
+            capabilities,
+            module_bytes.to_vec(),
+        )
+        .unwrap();
+
+    let result = runtime.execute("action_name", input).unwrap();
 
     result
 }
@@ -259,7 +275,7 @@ mod wasmer_specific_tests {
 #[cfg(all(test, feature = "wasmtime_rt"))]
 mod wasmtime_specific_tests {
 
-    use crate::types::{ActionCapabilities, WasmAction};
+    use crate::types::ActionCapabilities;
 
     use super::execute_precompiled_wasm;
 
@@ -267,14 +283,14 @@ mod wasmtime_specific_tests {
     fn wasmtime_test_can_call_precompiled_add() {
         let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasmtime");
 
-        let wasm_action = WasmAction {
-            code: wasm_bytes.to_vec(),
-            capabilities: ActionCapabilities::default(),
-        };
+        let capabilities = ActionCapabilities::default();
 
-        let res =
-            execute_precompiled_wasm(wasm_action, serde_json::json!({"param1": 5, "param2": 4}))
-                .unwrap();
+        let res = execute_precompiled_wasm(
+            wasm_bytes,
+            capabilities,
+            serde_json::json!({"param1": 5, "param2": 4}),
+        )
+        .unwrap();
 
         assert_eq!(
             res,
@@ -288,13 +304,11 @@ mod wasmtime_specific_tests {
     fn test_add_error_is_correctly_returned() {
         let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasmtime");
 
-        let wasm_action = WasmAction {
-            code: wasm_bytes.to_vec(),
-            capabilities: ActionCapabilities::default(),
-        };
+        let capabilities = ActionCapabilities::default();
 
         let res =
-            execute_precompiled_wasm(wasm_action, serde_json::json!({"param1": 5})).unwrap_err();
+            execute_precompiled_wasm(wasm_bytes, capabilities, serde_json::json!({"param1": 5}))
+                .unwrap_err();
 
         assert_eq!(
             res,
@@ -308,12 +322,10 @@ mod wasmtime_specific_tests {
     fn test_can_execute_wasm32_wasi_clock_module() {
         let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/clock.wasmtime");
 
-        let wasm_action = WasmAction {
-            code: wasm_bytes.to_vec(),
-            capabilities: ActionCapabilities::default(),
-        };
+        let capabilities = ActionCapabilities::default();
 
-        let res = execute_precompiled_wasm(wasm_action, serde_json::json!({})).unwrap();
+        let res =
+            execute_precompiled_wasm(wasm_bytes, capabilities, serde_json::json!({})).unwrap();
 
         assert!(res.get("elapsed").unwrap().as_u64().unwrap() > 0)
     }
@@ -323,12 +335,10 @@ mod wasmtime_specific_tests {
         let wasm_bytes =
             include_bytes!("../../target/wasm32-wasi/release/examples/random.wasmtime");
 
-        let wasm_action = WasmAction {
-            code: wasm_bytes.to_vec(),
-            capabilities: ActionCapabilities::default(),
-        };
+        let capabilities = ActionCapabilities::default();
 
-        let res = execute_precompiled_wasm(wasm_action, serde_json::json!({})).unwrap();
+        let res =
+            execute_precompiled_wasm(wasm_bytes, capabilities, serde_json::json!({})).unwrap();
 
         let rand = res.get("random").unwrap().as_u64().unwrap();
         assert!(rand > 0)
@@ -339,14 +349,10 @@ mod wasmtime_specific_tests {
         let wasm_bytes =
             include_bytes!("../../target/wasm32-wasi/release/examples/filesys.wasmtime");
 
-        let wasm_action = WasmAction {
-            code: wasm_bytes.to_vec(),
-            capabilities: ActionCapabilities {
-                dir: Some("/tmp/filesys".into()),
-            },
-        };
+        let capabilities = ActionCapabilities::default();
 
-        let res = execute_precompiled_wasm(wasm_action, serde_json::json!({})).unwrap();
+        let res =
+            execute_precompiled_wasm(wasm_bytes, capabilities, serde_json::json!({})).unwrap();
 
         assert_eq!(
             res,

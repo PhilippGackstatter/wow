@@ -113,6 +113,21 @@ where
 }
 
 pub struct WasmAction {
-    pub code: Vec<u8>,
+    pub module: wasmtime::Module,
     pub capabilities: ActionCapabilities,
+}
+
+pub trait WasmRuntime {
+    fn initialize_action(
+        &self,
+        action_name: String,
+        capabilities: ActionCapabilities,
+        module_bytes: Vec<u8>,
+    ) -> anyhow::Result<()>;
+
+    fn execute(
+        &self,
+        action_name: &str,
+        parameters: serde_json::Value,
+    ) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error>;
 }

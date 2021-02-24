@@ -1,14 +1,13 @@
 extern crate tide;
 
-use async_std::sync::RwLock;
 use openwhisk_wasm_runtime::core;
-use std::{collections::HashMap, sync::Arc};
+use openwhisk_wasm_runtime::wasmtime::Wasmtime;
 use tide_tracing::TraceMiddleware;
 use tracing::Level;
 
 #[async_std::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let state = Arc::new(RwLock::new(HashMap::new()));
+    let state = Wasmtime::default();
 
     let subscriber = tracing_subscriber::fmt()
         .with_max_level(Level::TRACE)
