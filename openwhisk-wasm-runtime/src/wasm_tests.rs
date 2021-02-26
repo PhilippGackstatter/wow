@@ -292,12 +292,7 @@ mod wasmtime_specific_tests {
         )
         .unwrap();
 
-        assert_eq!(
-            res,
-            serde_json::json!({
-                "result": 9
-            })
-        );
+        assert_eq!(res.get("result").unwrap().as_u64().unwrap(), 9);
     }
 
     #[test]
@@ -311,10 +306,8 @@ mod wasmtime_specific_tests {
                 .unwrap_err();
 
         assert_eq!(
-            res,
-            serde_json::json!({
-                "error": "Expected param2."
-            })
+            res.get("error").unwrap().as_str().unwrap(),
+            "Expected param2."
         );
     }
 
@@ -349,16 +342,16 @@ mod wasmtime_specific_tests {
         let wasm_bytes =
             include_bytes!("../../target/wasm32-wasi/release/examples/filesys.wasmtime");
 
-        let capabilities = ActionCapabilities::default();
+        let capabilities = ActionCapabilities {
+            dir: Some("/tmp/filesys".into()),
+        };
 
         let res =
             execute_precompiled_wasm(wasm_bytes, capabilities, serde_json::json!({})).unwrap();
 
         assert_eq!(
-            res,
-            serde_json::json!({
-                "content": "Hello, Wasm."
-            })
+            res.get("content").unwrap().as_str().unwrap(),
+            "Hello, Wasm."
         );
     }
 }
