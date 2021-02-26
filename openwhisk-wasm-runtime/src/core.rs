@@ -1,8 +1,8 @@
-use std::time::Instant;
+use std::{ops::Try, time::Instant};
 
 use crate::types::{ActivationContext, ActivationInit, ActivationResponse, WasmRuntime};
 use serde::Serialize;
-use tide::Request;
+use tide::{Request, StatusCode};
 
 #[derive(Serialize)]
 struct RuntimeResponse {
@@ -22,7 +22,7 @@ pub async fn start(mut _req: Request<impl WasmRuntime>) -> tide::Result<serde_js
     Ok(serde_json::to_value(resp).unwrap())
 }
 
-pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<tide::StatusCode> {
+pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<StatusCode> {
     let activation_init = req.body_json().await;
 
     if let Err(err) = &activation_init {
@@ -33,22 +33,24 @@ pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<tide::Stat
 
     println!("/init {:#?}", activation_init);
 
-    let time = Instant::now();
+    // let time = Instant::now();
     let module_bytes: Vec<u8> = base64::decode(activation_init.value.code)?;
-    println!("base64 decoding took {}µs", time.elapsed().as_micros());
+    // println!("base64 decoding took {} ms", time.elapsed().as_millis());
 
     let action_name = activation_init
         .value
         .env
         .get("__OW_ACTION_NAME")
-        .unwrap()
+        .ok_or_else(|| {
+            tide::Error::from_str(StatusCode::BadRequest, "Missing __OW_ACTION_NAME property")
+        })?
         .clone();
 
     let runtime = req.state();
 
     runtime.initialize_action(action_name, activation_init.value.annotations, module_bytes)?;
 
-    Ok(tide::StatusCode::Ok)
+    Ok(StatusCode::Ok)
 }
 
 pub async fn run(mut req: Request<impl WasmRuntime>) -> tide::Result<serde_json::Value> {

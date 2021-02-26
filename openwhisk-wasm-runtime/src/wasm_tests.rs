@@ -11,7 +11,9 @@ mod runtime_tests {
         capabilities: ActionCapabilities,
         input: serde_json::Value,
     ) -> Result<serde_json::Value, serde_json::Value> {
+        let time = std::time::Instant::now();
         let module_bytes: Vec<u8> = base64::decode(module_bytes).unwrap();
+        println!("base64 decoding took {} ms", time.elapsed().as_millis());
 
         #[cfg(feature = "wasmtime_rt")]
         let runtime = crate::wasmtime::Wasmtime::default();
