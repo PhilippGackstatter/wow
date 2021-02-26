@@ -35,8 +35,10 @@ impl WasmRuntime for Wasmtime {
         &self,
         action_name: String,
         capabilities: ActionCapabilities,
-        module_bytes: Vec<u8>,
+        module_bytes_b64: String,
     ) -> anyhow::Result<()> {
+        let module_bytes = crate::util::b64_decode(module_bytes_b64)?;
+
         let module = Module::deserialize(&self.engine, &module_bytes)?;
 
         let action = WasmAction {

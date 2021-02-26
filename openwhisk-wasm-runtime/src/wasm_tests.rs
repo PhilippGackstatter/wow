@@ -11,9 +11,7 @@ mod runtime_tests {
         capabilities: ActionCapabilities,
         input: serde_json::Value,
     ) -> Result<serde_json::Value, serde_json::Value> {
-        let time = std::time::Instant::now();
-        let module_bytes: Vec<u8> = base64::decode(module_bytes).unwrap();
-        println!("base64 decoding took {} ms", time.elapsed().as_millis());
+        let module_bytes = String::from_utf8(module_bytes).unwrap();
 
         #[cfg(feature = "wasmtime_rt")]
         let runtime = crate::wasmtime::Wasmtime::default();
@@ -22,11 +20,7 @@ mod runtime_tests {
         let runtime = crate::wasmer::Wasmer::default();
 
         runtime
-            .initialize_action(
-                "action_name".to_owned(),
-                capabilities,
-                module_bytes.to_vec(),
-            )
+            .initialize_action("action_name".to_owned(), capabilities, module_bytes)
             .unwrap();
 
         let result = runtime.execute("action_name", input).unwrap();

@@ -1,5 +1,3 @@
-use std::{ops::Try, time::Instant};
-
 use crate::types::{ActivationContext, ActivationInit, ActivationResponse, WasmRuntime};
 use serde::Serialize;
 use tide::{Request, StatusCode};
@@ -33,10 +31,6 @@ pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<StatusCode
 
     println!("/init {:#?}", activation_init);
 
-    // let time = Instant::now();
-    let module_bytes: Vec<u8> = base64::decode(activation_init.value.code)?;
-    // println!("base64 decoding took {} ms", time.elapsed().as_millis());
-
     let action_name = activation_init
         .value
         .env
@@ -48,7 +42,11 @@ pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<StatusCode
 
     let runtime = req.state();
 
-    runtime.initialize_action(action_name, activation_init.value.annotations, module_bytes)?;
+    runtime.initialize_action(
+        action_name,
+        activation_init.value.annotations,
+        activation_init.value.code,
+    )?;
 
     Ok(StatusCode::Ok)
 }

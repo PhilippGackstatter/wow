@@ -122,7 +122,7 @@ pub trait WasmRuntime {
         &self,
         action_name: String,
         capabilities: ActionCapabilities,
-        module_bytes: Vec<u8>,
+        module_bytes_b64: String,
     ) -> anyhow::Result<()>;
 
     fn execute(
