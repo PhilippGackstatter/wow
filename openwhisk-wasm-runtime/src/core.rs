@@ -44,9 +44,9 @@ pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<tide::Stat
         .unwrap()
         .clone();
 
-    let state = req.state();
+    let runtime = req.state();
 
-    state.initialize_action(action_name, activation_init.value.annotations, module_bytes)?;
+    runtime.initialize_action(action_name, activation_init.value.annotations, module_bytes)?;
 
     Ok(tide::StatusCode::Ok)
 }

@@ -1,39 +1,80 @@
-use std::{fs, path::Path, ptr::slice_from_raw_parts, time::Instant};
+use anyhow::anyhow;
+use std::{fs, path::Path, ptr::slice_from_raw_parts, sync::Arc};
 
-use wasmer::Instance;
+use dashmap::DashMap;
+use wasmer::{Instance, Module, Store};
 use wasmer_wasi::{WasiEnv, WasiState};
 
-use crate::types::{ActionCapabilities, WasmAction};
+use crate::types::{ActionCapabilities, WasmAction, WasmRuntime};
 
-pub fn execute_wasm(
-    parameters: serde_json::Value,
-    wasm_action: &WasmAction,
-) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error> {
-    todo!()
-    // let store = wasmer::Store::new(&wasmer::Native::headless().engine());
+#[derive(Clone)]
+pub struct Wasmer {
+    pub store: Store,
+    pub modules: Arc<DashMap<String, WasmAction<Module>>>,
+}
 
-    // let before = Instant::now();
-    // let module = unsafe { Module::deserialize(&store, &wasm_action.code)? };
-    // println!(
-    //     "wasmer deserializing took {}ms",
-    //     before.elapsed().as_millis()
-    // );
+impl Default for Wasmer {
+    fn default() -> Self {
+        Self {
+            store: wasmer::Store::new(&wasmer::Native::headless().engine()),
+            modules: Arc::new(DashMap::new()),
+        }
+    }
+}
 
-    // let json_bytes = serde_json::to_vec(&parameters).unwrap();
+impl WasmRuntime for Wasmer {
+    fn initialize_action(
+        &self,
+        action_name: String,
+        capabilities: ActionCapabilities,
+        module_bytes: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        let module = unsafe { Module::deserialize(&self.store, &module_bytes)? };
 
-    // let mut wasi_env = build_wasi_env(&wasm_action.capabilities, json_bytes.len())?;
+        let action = WasmAction {
+            module,
+            capabilities,
+        };
 
-    // let import_object = wasi_env.import_object(&module)?;
+        self.modules.insert(action_name, action);
 
-    // let instance = Instance::new(&module, &import_object)?;
+        Ok(())
+    }
 
-    // let main = instance.exports.get_function("_start")?;
+    fn execute(
+        &self,
+        action_name: &str,
+        parameters: serde_json::Value,
+    ) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error> {
+        let wasm_action = self
+            .modules
+            .get(action_name)
+            .ok_or_else(|| anyhow!(format!("No action named {}", action_name)))?;
 
-    // pass_string_arg(&instance, json_bytes)?;
+        // let before = Instant::now();
+        // println!(
+        //     "wasmer deserializing took {}ms",
+        //     before.elapsed().as_millis()
+        // );
 
-    // main.call(&[])?;
+        let module = &wasm_action.module;
 
-    // Ok(get_return_value(&instance))
+        let json_bytes = serde_json::to_vec(&parameters).unwrap();
+
+        let mut wasi_env = build_wasi_env(&wasm_action.capabilities, json_bytes.len())?;
+
+        let import_object = wasi_env.import_object(&module)?;
+
+        let instance = Instance::new(&module, &import_object)?;
+
+        let main = instance.exports.get_function("_start")?;
+
+        pass_string_arg(&instance, json_bytes)?;
+
+        main.call(&[])?;
+
+        Ok(get_return_value(&instance))
+    }
 }
 
 fn build_wasi_env(

@@ -112,8 +112,8 @@ where
     buf.parse::<u64>().map_err(serde::de::Error::custom)
 }
 
-pub struct WasmAction {
-    pub module: wasmtime::Module,
+pub struct WasmAction<M> {
+    pub module: M,
     pub capabilities: ActionCapabilities,
 }
 

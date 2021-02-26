@@ -3,7 +3,7 @@ use std::{
     io::Write,
     ptr::slice_from_raw_parts,
     sync::Arc,
-    time::Instant,
+    // time::Instant,
 };
 
 use anyhow::anyhow;
@@ -18,7 +18,7 @@ use crate::types::{ActionCapabilities, WasmAction, WasmRuntime};
 #[derive(Clone)]
 pub struct Wasmtime {
     pub engine: Engine,
-    pub modules: Arc<DashMap<String, WasmAction>>,
+    pub modules: Arc<DashMap<String, WasmAction<Module>>>,
 }
 
 impl Default for Wasmtime {
@@ -69,14 +69,14 @@ impl WasmRuntime for Wasmtime {
         let wasi = Wasi::new(&store, ctx);
         wasi.add_to_linker(&mut linker)?;
 
-        let timestamp = Instant::now();
+        // let timestamp = Instant::now();
 
         let module = &wasm_action.module;
 
-        println!(
-            "wasmtime compiling took {}ms",
-            timestamp.elapsed().as_millis()
-        );
+        // println!(
+        //     "wasmtime compiling took {}ms",
+        //     timestamp.elapsed().as_millis()
+        // );
 
         let instance = linker.instantiate(module)?;
         let main = linker.instance("", &instance)?.get_default("")?;

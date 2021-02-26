@@ -1,287 +1,53 @@
-use crate::{
-    types::{ActionCapabilities, WasmRuntime},
-    wasmtime::Wasmtime,
-};
+#[cfg(test)]
+mod runtime_tests {
 
-/*
-macro_rules! test_runtime {
-    ($mod_name:ident, $exec_wasm:path) => {
+    use std::fs::read;
+
+    use crate::types::{ActionCapabilities, WasmRuntime};
 
     #[cfg(test)]
-    mod $mod_name {
-        use std::time::Instant;
+    pub fn execute_precompiled_wasm(
+        module_bytes: Vec<u8>,
+        capabilities: ActionCapabilities,
+        input: serde_json::Value,
+    ) -> Result<serde_json::Value, serde_json::Value> {
+        let module_bytes: Vec<u8> = base64::decode(module_bytes).unwrap();
 
-        use crate::types::{ActionCapabilities, WasmAction};
+        #[cfg(feature = "wasmtime_rt")]
+        let runtime = crate::wasmtime::Wasmtime::default();
 
+        #[cfg(feature = "wasmer_rt")]
+        let runtime = crate::wasmer::Wasmer::default();
 
-        #[test]
-        fn test_can_call_simple_add() {
-            let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasm");
+        runtime
+            .initialize_action(
+                "action_name".to_owned(),
+                capabilities,
+                module_bytes.to_vec(),
+            )
+            .unwrap();
 
-            let wasm_action = WasmAction {
-                code: wasm_bytes.to_vec(),
-                capabilities: ActionCapabilities::default(),
-            };
+        let result = runtime.execute("action_name", input).unwrap();
 
-            let res = $exec_wasm(serde_json::json!({"param1": 5, "param2": 4}), &wasm_action)
-                .unwrap()
-                .unwrap();
-
-            assert_eq!(
-                res,
-                serde_json::json!({
-                    "result": 9
-                })
-            );
-        }
-
-        #[test]
-        fn test_add_error_is_correctly_returned() {
-            let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasm");
-
-            let wasm_action = WasmAction {
-                code: wasm_bytes.to_vec(),
-                capabilities: ActionCapabilities::default(),
-            };
-
-            let res = $exec_wasm(serde_json::json!({"param1": 5}), &wasm_action)
-                .unwrap()
-                .unwrap_err();
-
-            assert_eq!(
-                res,
-                serde_json::json!({
-                    "error": "Expected param2."
-                })
-            );
-        }
-
-        #[test]
-        fn test_can_execute_wasm32_wasi_module() {
-            let wasm_bytes =
-                include_bytes!("../../target/wasm32-wasi/release/examples/println-wasi.wasm");
-
-            let wasm_action = WasmAction {
-                code: wasm_bytes.to_vec(),
-                capabilities: ActionCapabilities::default(),
-            };
-
-            let timestamp = Instant::now();
-
-            let res = $exec_wasm(serde_json::json!({"param": 5}), &wasm_action)
-                .unwrap()
-                .unwrap();
-
-            println!("execute wasm took {}ms", timestamp.elapsed().as_millis());
-
-            assert_eq!(
-                res,
-                serde_json::json!({
-                    "result": 5
-                })
-            );
-        }
-
-        #[test]
-        fn test_can_execute_wasm32_wasi_clock_module() {
-            let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/clock.wasm");
-
-            let wasm_action = WasmAction {
-                code: wasm_bytes.to_vec(),
-                capabilities: ActionCapabilities::default(),
-            };
-
-            let res = $exec_wasm(serde_json::json!({}), &wasm_action)
-                .unwrap()
-                .unwrap();
-
-            assert!(res.get("elapsed").unwrap().as_u64().unwrap() > 0)
-        }
-
-        #[test]
-        fn test_can_execute_wasm32_wasi_random_module() {
-            let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/random.wasm");
-
-            let wasm_action = WasmAction {
-                code: wasm_bytes.to_vec(),
-                capabilities: ActionCapabilities::default(),
-            };
-
-            let res = $exec_wasm(serde_json::json!({}), &wasm_action)
-                .unwrap()
-                .unwrap();
-
-            let rand = res.get("random").unwrap().as_u64().unwrap();
-            assert!(rand > 0)
-        }
-
-        #[test]
-        fn test_can_execute_wasm32_wasi_filesystem_module() {
-            let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/filesys.wasm");
-
-            let wasm_action = WasmAction {
-                code: wasm_bytes.to_vec(),
-                capabilities: ActionCapabilities {
-                    dir: Some("/tmp/filesys".into()),
-                },
-            };
-
-            let res = $exec_wasm(serde_json::json!({}), &wasm_action)
-                .unwrap()
-                .unwrap();
-
-            assert_eq!(
-                res,
-                serde_json::json!({
-                    "content": "Hello, Wasm."
-                })
-            );
-        }
+        result
     }
-    }
-}
-*/
-// #[cfg(all(test, feature = "wasmer_rt"))]
-// test_runtime!(wasmer_tests, super::super::wasmer::execute_wasm);
-// test_runtime!(wasmtime_tests, super::super::wasmtime::execute_wasm);
 
-// Runtime-specific tests
+    fn get_module_bytes(path: &str) -> Vec<u8> {
+        let mut path = path.to_owned();
 
-pub fn execute_precompiled_wasm(
-    module_bytes: &[u8],
-    capabilities: ActionCapabilities,
-    input: serde_json::Value,
-) -> Result<serde_json::Value, serde_json::Value> {
-    let module_bytes: Vec<u8> = base64::decode(module_bytes).unwrap();
+        #[cfg(feature = "wasmtime_rt")]
+        path.push_str(".wasmtime");
 
-    #[cfg(all(feature = "wasmtime_rt"))]
-    let runtime = Wasmtime::default();
+        #[cfg(feature = "wasmer_rt")]
+        path.push_str(".wasmer");
 
-    // #[cfg(all(feature = "wasmer_rt"))]
-    // let runtime = ...
-
-    runtime
-        .initialize_action(
-            "action_name".to_owned(),
-            capabilities,
-            module_bytes.to_vec(),
-        )
-        .unwrap();
-
-    let result = runtime.execute("action_name", input).unwrap();
-
-    result
-}
-
-#[cfg(all(test, feature = "wasmer_rt"))]
-mod wasmer_specific_tests {
-
-    use crate::types::{ActionCapabilities, WasmAction};
-
-    use super::execute_precompiled_wasm;
-
-    #[test]
-    fn wasmer_test_can_call_precompiled_add() {
-        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasmer");
-
-        let wasm_action = WasmAction {
-            code: wasm_bytes.to_vec(),
-            capabilities: ActionCapabilities::default(),
-        };
-
-        let res =
-            execute_precompiled_wasm(wasm_action, serde_json::json!({"param1": 5, "param2": 4}))
-                .unwrap();
-
-        assert_eq!(
-            res,
-            serde_json::json!({
-                "result": 9
-            })
-        );
+        let contents = read(path).unwrap();
+        contents
     }
 
     #[test]
-    fn test_add_error_is_correctly_returned() {
-        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasmer");
-
-        let wasm_action = WasmAction {
-            code: wasm_bytes.to_vec(),
-            capabilities: ActionCapabilities::default(),
-        };
-
-        let res =
-            execute_precompiled_wasm(wasm_action, serde_json::json!({"param1": 5})).unwrap_err();
-
-        assert_eq!(
-            res,
-            serde_json::json!({
-                "error": "Expected param2."
-            })
-        );
-    }
-
-    #[test]
-    fn test_can_execute_wasm32_wasi_clock_module() {
-        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/clock.wasmer");
-
-        let wasm_action = WasmAction {
-            code: wasm_bytes.to_vec(),
-            capabilities: ActionCapabilities::default(),
-        };
-
-        let res = execute_precompiled_wasm(wasm_action, serde_json::json!({})).unwrap();
-
-        assert!(res.get("elapsed").unwrap().as_u64().unwrap() > 0)
-    }
-
-    #[test]
-    fn test_can_execute_wasm32_wasi_random_module() {
-        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/random.wasmer");
-
-        let wasm_action = WasmAction {
-            code: wasm_bytes.to_vec(),
-            capabilities: ActionCapabilities::default(),
-        };
-
-        let res = execute_precompiled_wasm(wasm_action, serde_json::json!({})).unwrap();
-
-        let rand = res.get("random").unwrap().as_u64().unwrap();
-        assert!(rand > 0)
-    }
-
-    #[test]
-    fn test_can_execute_wasm32_wasi_filesystem_module() {
-        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/filesys.wasmer");
-
-        let wasm_action = WasmAction {
-            code: wasm_bytes.to_vec(),
-            capabilities: ActionCapabilities {
-                dir: Some("/tmp/filesys".into()),
-            },
-        };
-
-        let res = execute_precompiled_wasm(wasm_action, serde_json::json!({})).unwrap();
-
-        assert_eq!(
-            res,
-            serde_json::json!({
-                "content": "Hello, Wasm."
-            })
-        );
-    }
-}
-
-#[cfg(all(test, feature = "wasmtime_rt"))]
-mod wasmtime_specific_tests {
-
-    use crate::types::ActionCapabilities;
-
-    use super::execute_precompiled_wasm;
-
-    #[test]
-    fn wasmtime_test_can_call_precompiled_add() {
-        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasmtime");
+    fn test_can_call_precompiled_add() {
+        let wasm_bytes = get_module_bytes("../target/wasm32-wasi/release/examples/add");
 
         let capabilities = ActionCapabilities::default();
 
@@ -297,7 +63,7 @@ mod wasmtime_specific_tests {
 
     #[test]
     fn test_add_error_is_correctly_returned() {
-        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/add.wasmtime");
+        let wasm_bytes = get_module_bytes("../target/wasm32-wasi/release/examples/add");
 
         let capabilities = ActionCapabilities::default();
 
@@ -313,7 +79,7 @@ mod wasmtime_specific_tests {
 
     #[test]
     fn test_can_execute_wasm32_wasi_clock_module() {
-        let wasm_bytes = include_bytes!("../../target/wasm32-wasi/release/examples/clock.wasmtime");
+        let wasm_bytes = get_module_bytes("../target/wasm32-wasi/release/examples/clock");
 
         let capabilities = ActionCapabilities::default();
 
@@ -325,8 +91,7 @@ mod wasmtime_specific_tests {
 
     #[test]
     fn test_can_execute_wasm32_wasi_random_module() {
-        let wasm_bytes =
-            include_bytes!("../../target/wasm32-wasi/release/examples/random.wasmtime");
+        let wasm_bytes = get_module_bytes("../target/wasm32-wasi/release/examples/random");
 
         let capabilities = ActionCapabilities::default();
 
@@ -339,8 +104,7 @@ mod wasmtime_specific_tests {
 
     #[test]
     fn test_can_execute_wasm32_wasi_filesystem_module() {
-        let wasm_bytes =
-            include_bytes!("../../target/wasm32-wasi/release/examples/filesys.wasmtime");
+        let wasm_bytes = get_module_bytes("../target/wasm32-wasi/release/examples/filesys");
 
         let capabilities = ActionCapabilities {
             dir: Some("/tmp/filesys".into()),
