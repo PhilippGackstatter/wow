@@ -1,5 +1,5 @@
 pub mod core;
-mod types;
+pub mod types;
 mod wasm_tests;
 pub mod wasmer;
 pub mod wasmtime;

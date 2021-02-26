@@ -1,7 +1,11 @@
 extern crate tide;
 
+use std::time::Duration;
+
+use async_std::task::{self};
 use openwhisk_wasm_runtime::core;
 use openwhisk_wasm_runtime::wasmtime::Wasmtime;
+use serde_json::json;
 use tide_tracing::TraceMiddleware;
 use tracing::Level;
 
@@ -21,8 +25,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     app.at("/start").post(core::start);
     app.at("/init").post(core::init);
     app.at("/run").post(core::run);
+    app.at("/block").get(block);
 
     app.listen("127.0.0.1:9000").await.unwrap();
 
     Ok(())
+}
+
+pub async fn block(
+    mut _req: tide::Request<impl openwhisk_wasm_runtime::types::WasmRuntime>,
+) -> tide::Result<serde_json::Value> {
+    let thread_id = std::thread::current().id();
+
+    task::spawn_blocking(|| {
+        std::thread::sleep(Duration::new(1, 0));
+    })
+    .await;
+
+    Ok(json!({
+        "thread_id": format!("{:?}", thread_id),
+    }))
 }
