@@ -1,4 +1,5 @@
 use crate::types::{ActivationContext, ActivationInit, ActivationResponse, WasmRuntime};
+use async_std::task;
 use serde::Serialize;
 use tide::{Request, StatusCode};
 
@@ -51,14 +52,20 @@ pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<StatusCode
     Ok(StatusCode::Ok)
 }
 
-pub async fn run(mut req: Request<impl WasmRuntime>) -> tide::Result<serde_json::Value> {
+pub async fn run(
+    mut req: Request<impl WasmRuntime + Send + Sync + 'static>,
+) -> tide::Result<serde_json::Value> {
     let activation_context: ActivationContext = req.body_json().await?;
 
     println!("/run {:#?}", activation_context);
 
-    let runtime = req.state();
+    // Create a cheap clone of the runtime that can be moved onto another thread
+    let runtime = req.state().clone();
 
-    let result = runtime.execute(&activation_context.action_name, activation_context.value);
+    let result = task::spawn_blocking(move || {
+        runtime.execute(&activation_context.action_name, activation_context.value)
+    })
+    .await;
 
     println!("Wasm Execution returned {:?}", result);
 

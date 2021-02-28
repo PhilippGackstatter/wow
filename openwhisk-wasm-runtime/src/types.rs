@@ -117,7 +117,7 @@ pub struct WasmAction<M> {
     pub capabilities: ActionCapabilities,
 }
 
-pub trait WasmRuntime {
+pub trait WasmRuntime: Clone {
     fn initialize_action(
         &self,
         action_name: String,
