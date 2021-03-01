@@ -109,9 +109,8 @@ mod runtime_tests {
         let res =
             execute_precompiled_wasm(wasm_bytes, capabilities, serde_json::json!({})).unwrap();
 
-        assert_eq!(
-            res.get("content").unwrap().as_str().unwrap(),
-            "Hello, Wasm."
-        );
+        println!("Filesys: {:?}", res);
+
+        assert!(res.get("success").unwrap().as_bool().unwrap());
     }
 }
