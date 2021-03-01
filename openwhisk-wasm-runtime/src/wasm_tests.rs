@@ -104,6 +104,7 @@ mod runtime_tests {
 
         let capabilities = ActionCapabilities {
             dir: Some("/tmp/filesys".into()),
+            ..Default::default()
         };
 
         let res =
@@ -112,5 +113,22 @@ mod runtime_tests {
         println!("Filesys: {:?}", res);
 
         assert!(res.get("success").unwrap().as_bool().unwrap());
+    }
+
+    #[test]
+    fn test_can_execute_http_module() {
+        let wasm_bytes = get_module_bytes("../target/wasm32-wasi/release/examples/net");
+
+        let capabilities = ActionCapabilities {
+            net_access: true,
+            ..Default::default()
+        };
+
+        let res =
+            execute_precompiled_wasm(wasm_bytes, capabilities, serde_json::json!({})).unwrap();
+
+        let req_time = res.get("request_time").unwrap().as_i64().unwrap();
+        println!("{}", req_time);
+        assert!(req_time > 999);
     }
 }

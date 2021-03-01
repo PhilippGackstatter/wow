@@ -40,10 +40,10 @@ pub async fn block(
 ) -> tide::Result<serde_json::Value> {
     let thread_id = std::thread::current().id();
 
-    task::spawn_blocking(|| {
-        std::thread::sleep(Duration::new(1, 0));
-    })
-    .await;
+    // task::spawn_blocking(|| {
+    std::thread::sleep(Duration::new(1, 0));
+    // })
+    // .await;
 
     Ok(json!({
         "thread_id": format!("{:?}", thread_id),

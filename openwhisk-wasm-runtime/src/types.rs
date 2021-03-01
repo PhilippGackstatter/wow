@@ -76,6 +76,7 @@ pub struct ActivationInitInner {
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct ActionCapabilities {
     pub dir: Option<String>,
+    pub net_access: bool,
 }
 
 impl Debug for ActivationInitInner {

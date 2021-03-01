@@ -71,6 +71,10 @@ impl WasmRuntime for Wasmtime {
         let wasi = Wasi::new(&store, ctx);
         wasi.add_to_linker(&mut linker)?;
 
+        if wasm_action.capabilities.net_access {
+            link_net(&mut linker)?;
+        }
+
         // let timestamp = Instant::now();
 
         let module = &wasm_action.module;
@@ -89,6 +93,20 @@ impl WasmRuntime for Wasmtime {
 
         Ok(get_return_value(&instance))
     }
+}
+
+fn link_net(linker: &mut Linker) -> anyhow::Result<()> {
+    linker.func("http", "get", || -> i32 {
+        if let Ok(resp) = reqwest::blocking::get("http://127.0.0.1:9000/block") {
+            if let Ok(txt) = resp.text() {
+                return txt.len() as i32;
+            }
+        }
+
+        0
+    })?;
+
+    Ok(())
 }
 
 fn build_wasi_context(

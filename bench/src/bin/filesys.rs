@@ -8,6 +8,7 @@ async fn main() -> anyhow::Result<()> {
 
     let capabilities = ActionCapabilities {
         dir: Some("/tmp/filesys".into()),
+        ..Default::default()
     };
 
     init(file_name, capabilities).await?;
