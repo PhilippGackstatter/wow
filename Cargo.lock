@@ -658,7 +658,7 @@ dependencies = [
  "gimli 0.22.0",
  "log",
  "regalloc",
- "smallvec",
+ "smallvec 1.6.1",
  "target-lexicon",
  "thiserror",
 ]
@@ -678,7 +678,7 @@ dependencies = [
  "log",
  "regalloc",
  "serde",
- "smallvec",
+ "smallvec 1.6.1",
  "target-lexicon",
  "thiserror",
 ]
@@ -741,7 +741,7 @@ checksum = "b608bb7656c554d0a4cf8f50c7a10b857e80306f6ff829ad6d468a7e2323c8d8"
 dependencies = [
  "cranelift-codegen 0.68.0",
  "log",
- "smallvec",
+ "smallvec 1.6.1",
  "target-lexicon",
 ]
 
@@ -753,7 +753,7 @@ checksum = "0153680ebce89aac7cad90a5442bb136faacfc86ea62587a01b8e8e79f8249c9"
 dependencies = [
  "cranelift-codegen 0.70.0",
  "log",
- "smallvec",
+ "smallvec 1.6.1",
  "target-lexicon",
 ]
 
@@ -779,7 +779,7 @@ dependencies = [
  "itertools 0.10.0",
  "log",
  "serde",
- "smallvec",
+ "smallvec 1.6.1",
  "thiserror",
  "wasmparser 0.73.1",
 ]
@@ -1413,6 +1413,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "hamming"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "65043da274378d68241eb9a8f8f8aa54e349136f7b8e12f63e3ef44043cc30e1"
+
+[[package]]
 name = "hashbrown"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2015,7 +2021,7 @@ dependencies = [
  "instant",
  "libc",
  "redox_syscall",
- "smallvec",
+ "smallvec 1.6.1",
  "winapi",
 ]
 
@@ -2146,6 +2152,53 @@ name = "ppv-lite86"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
+
+[[package]]
+name = "primal"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e31b86efadeaeb1235452171a66689682783149a6249ff334a2c5d8218d00a4"
+dependencies = [
+ "primal-check",
+ "primal-estimate",
+ "primal-sieve",
+]
+
+[[package]]
+name = "primal-bit"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "686a64e2f50194c64942992af5799e6b6e8775b8f88c607d72ed0a2fd58b9b21"
+dependencies = [
+ "hamming",
+]
+
+[[package]]
+name = "primal-check"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e65f96c0a171f887198c274392c99a116ef65aa7f53f3b6d4902f493965c2d1"
+dependencies = [
+ "num-integer",
+]
+
+[[package]]
+name = "primal-estimate"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56ea4531dde757b56906493c8604641da14607bf9cdaa80fb9c9cabd2429f8d5"
+
+[[package]]
+name = "primal-sieve"
+version = "0.2.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da2d6ed369bb4b0273aeeb43f07c105c0117717cbae827b20719438eb2eb798c"
+dependencies = [
+ "hamming",
+ "primal-bit",
+ "primal-estimate",
+ "smallvec 0.6.14",
+]
 
 [[package]]
 name = "proc-macro-error"
@@ -2359,7 +2412,7 @@ dependencies = [
  "log",
  "rustc-hash",
  "serde",
- "smallvec",
+ "smallvec 1.6.1",
 ]
 
 [[package]]
@@ -2650,6 +2703,15 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "futures-io",
+]
+
+[[package]]
+name = "smallvec"
+version = "0.6.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b97fcaeba89edba30f044a10c6a3cc39df9c3f17d7cd829dd1446cab35f890e0"
+dependencies = [
+ "maybe-uninit",
 ]
 
 [[package]]
@@ -3063,7 +3125,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sharded-slab",
- "smallvec",
+ "smallvec 1.6.1",
  "thread_local",
  "tracing",
  "tracing-core",
@@ -3347,6 +3409,7 @@ name = "wasm-json"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "primal",
  "rand 0.7.3",
  "serde_json",
 ]
@@ -3396,7 +3459,7 @@ dependencies = [
  "raw-cpuid",
  "serde",
  "serde_bytes",
- "smallvec",
+ "smallvec 1.6.1",
  "target-lexicon",
  "thiserror",
  "wasmer-types",
@@ -3417,7 +3480,7 @@ dependencies = [
  "more-asserts",
  "rayon",
  "serde",
- "smallvec",
+ "smallvec 1.6.1",
  "tracing",
  "wasmer-compiler",
  "wasmer-types",
@@ -3441,7 +3504,7 @@ dependencies = [
  "regex",
  "rustc_version 0.2.3",
  "semver 0.11.0",
- "smallvec",
+ "smallvec 1.6.1",
  "target-lexicon",
  "wasmer-compiler",
  "wasmer-types",
@@ -3634,7 +3697,7 @@ dependencies = [
  "region",
  "rustc-demangle",
  "serde",
- "smallvec",
+ "smallvec 1.6.1",
  "target-lexicon",
  "wasmparser 0.73.1",
  "wasmtime-cache",

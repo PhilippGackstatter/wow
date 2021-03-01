@@ -4,14 +4,17 @@ use std::time::Duration;
 
 use async_std::task::{self};
 use openwhisk_wasm_runtime::core;
-use openwhisk_wasm_runtime::wasmtime::Wasmtime;
 use serde_json::json;
 use tide_tracing::TraceMiddleware;
 use tracing::Level;
 
 #[async_std::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let state = Wasmtime::default();
+    #[cfg(feature = "wasmtime_rt")]
+    let runtime = openwhisk_wasm_runtime::wasmtime::Wasmtime::default();
+
+    #[cfg(feature = "wasmer_rt")]
+    let runtime = openwhisk_wasm_runtime::wasmer::Wasmer::default();
 
     let subscriber = tracing_subscriber::fmt()
         .with_max_level(Level::TRACE)
@@ -19,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tracing::subscriber::set_global_default(subscriber).expect("no global subscriber has been set");
 
-    let mut app = tide::with_state(state);
+    let mut app = tide::with_state(runtime);
     app.with(TraceMiddleware::new());
 
     app.at("/start").post(core::start);

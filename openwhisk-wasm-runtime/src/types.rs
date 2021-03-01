@@ -58,12 +58,12 @@ impl ActivationResponse {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ActivationInit {
     pub value: ActivationInitInner,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ActivationInitInner {
     pub name: String,
     pub main: String,
@@ -73,7 +73,7 @@ pub struct ActivationInitInner {
     pub annotations: ActionCapabilities,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 pub struct ActionCapabilities {
     pub dir: Option<String>,
 }
@@ -90,7 +90,7 @@ impl Debug for ActivationInitInner {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ActivationContext {
     pub value: serde_json::Value,
     pub namespace: String,
