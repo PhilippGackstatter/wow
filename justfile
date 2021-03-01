@@ -9,7 +9,7 @@ build runtime="":
     cd openwhisk-wasm-runtime && cargo build --release --features {{runtime}} && cd ..
 
 build-wasm-examples:
-    cd wasm-json && cargo build --release --examples --target wasm32-wasi && cd ..
+    cd wasm-json && cargo build --release --features wasm --no-default-features --examples --target wasm32-wasi && cd ..
     find target/wasm32-wasi/release/examples/ -name "*.wasm" -exec ../binaryen/bin/wasm-opt -O4 -o {} {} \;
 
 build-bin-examples:
