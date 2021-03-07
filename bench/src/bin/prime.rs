@@ -5,18 +5,27 @@ use serde_json::json;
 async fn main() -> anyhow::Result<()> {
     let file_name = get_first_arg()?;
 
-    init(file_name, Default::default()).await?;
+    init(
+        file_name,
+        openwhisk_wasm_runtime::types::ActionCapabilities {
+            net_access: true,
+            ..Default::default()
+        },
+    )
+    .await?;
 
     let num_requests = num_cpus::get() * 2;
 
     let responses = benchmark(num_requests, json!({})).await;
 
-    for response in responses.iter() {
-        println!(
-            "prime time: {}",
-            response.get("result").unwrap().get("calc_time").unwrap()
-        );
-    }
+    // for response in responses.iter() {
+    //     println!(
+    //         "response: {}",
+    //         response//.get("result").unwrap().get("calc_time").unwrap()
+    //     );
+    // }
+
+    println!("{}", serde_json::to_string_pretty(&responses)?);
 
     Ok(())
 }
