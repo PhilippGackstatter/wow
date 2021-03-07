@@ -1,0 +1,8 @@
+[package]
+name = "ow-wamr"
+version = "0.1.0"
+authors = ["PhilippGackstatter <philipp.gackstatter@student.tuwien.ac.at>"]
+edition = "2018"
+
+[dependencies]
+wamr-sys = { path = "../../wamr-sys", version = "0.1"}
