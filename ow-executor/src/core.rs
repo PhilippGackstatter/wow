@@ -1,5 +1,5 @@
-use ow_common::{ActivationContext, ActivationInit, ActivationResponse, WasmRuntime};
 use async_std::task;
+use ow_common::{ActivationContext, ActivationInit, ActivationResponse, WasmRuntime};
 use serde::Serialize;
 use tide::{Request, StatusCode};
 
