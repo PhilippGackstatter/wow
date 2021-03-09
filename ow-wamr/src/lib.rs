@@ -1,6 +1,7 @@
 use std::{
     ffi::{CStr, CString},
     mem::MaybeUninit,
+    os::raw::c_char,
     ptr::{null, slice_from_raw_parts},
 };
 
@@ -12,22 +13,12 @@ pub fn run_module() -> anyhow::Result<()> {
     );
     let mut error_buf: Vec<i8> = vec![32; 128];
     const STACK_SIZE: u32 = 8092;
+    const HEAP_SIZE: u32 = 1024;
 
     unsafe {
         if !wasm_runtime_init() {
-            anyhow::bail!("runtime_init returned false");
+            anyhow::bail!("runtime_init failed");
         }
-
-        // let init_args = wamr_sys::RuntimeInitArgs {
-        //     mem_alloc_type: wamr_sys::mem_alloc_type_t_Alloc_With_Pool,
-        //     mem_alloc_option: wamr_sys::MemAllocOption {
-        //         pool: wamr_sys::MemAllocOption__bindgen_ty_1 {
-        //             heap_buf: heap_buffer.as_mut_ptr() as *mut c_void,
-        //             heap_size: heap_buffer.len() as u32,
-        //         }
-        //         allocator:
-        //     }
-        // };
 
         let module = wasm_runtime_load(
             wasm_module_bytes.as_ptr(),
@@ -36,6 +27,7 @@ pub fn run_module() -> anyhow::Result<()> {
             error_buf.len() as u32,
         );
 
+
         if module.is_null() {
             panic!(
                 "Module is null: {}",
@@ -43,10 +35,34 @@ pub fn run_module() -> anyhow::Result<()> {
             );
         }
 
+        let json_bytes =
+            serde_json::to_vec(&serde_json::json!({"param1": 5, "param2": 4})).unwrap();
+
+        let json_bytes_len = json_bytes.len();
+        let args = vec![CString::new(format!("{}", json_bytes_len)).unwrap()];
+
+        let c_args = args
+            .iter()
+            .map(|arg| arg.as_ptr())
+            .collect::<Vec<*const c_char>>();
+
+        let null_ptr = 0 as *mut *const i8;
+        wasm_runtime_set_wasi_args(
+            module,
+            null_ptr,
+            0,
+            null_ptr,
+            0,
+            null_ptr,
+            0,
+            c_args.as_ptr() as *mut *mut i8,
+            1,
+        );
+
         let module_inst = wasm_runtime_instantiate(
             module,
             STACK_SIZE,
-            0,
+            HEAP_SIZE,
             error_buf.as_mut_ptr(),
             error_buf.len() as u32,
         );
@@ -66,20 +82,10 @@ pub fn run_module() -> anyhow::Result<()> {
                 CStr::from_ptr(error_buf.as_ptr()).to_string_lossy()
             );
         }
-        let json_bytes = serde_json::to_vec(&serde_json::json!({
-            "param1": 1,
-            "param2": 3,
-        }))
-        .unwrap();
+
         pass_string_arg(exec_env, module_inst, json_bytes)?;
-        let ret_val = get_return_value(exec_env, module_inst);
 
-        println!("{:?}", ret_val);
-
-        // Maybe we can use wasm_runtime_lookup_wasi_start_function
-        let func_name = CString::new("main").unwrap();
-        let start_func =
-            wasm_runtime_lookup_function(module_inst, func_name.as_c_str().as_ptr(), null());
+        let start_func = wasm_runtime_lookup_wasi_start_function(module_inst);
 
         if start_func.is_null() {
             panic!(
@@ -88,15 +94,11 @@ pub fn run_module() -> anyhow::Result<()> {
             );
         }
 
-        let mut args: [u32; 1] = [0];
-        if wasm_runtime_call_wasm(exec_env, start_func, 0, args.as_mut_ptr()) {
-            println!("Call succeeded, retval: {}", args[0]);
-        } else {
-            println!(
-                "Call failed: {}",
-                CStr::from_ptr(wasm_runtime_get_exception(module_inst)).to_string_lossy()
-            );
-        }
+        call_function(exec_env, module_inst, start_func, false, vec![])?;
+
+        let ret_val = get_return_value(exec_env, module_inst);
+
+        println!("{}", serde_json::to_string_pretty(&ret_val).unwrap());
     }
 
     Ok(())
@@ -148,7 +150,10 @@ pub fn pass_string_arg(
     Ok(())
 }
 
-fn get_return_value(exec_env: wasm_exec_env_t, instance: wasm_module_inst_t) -> serde_json::Value {
+fn get_return_value(
+    exec_env: wasm_exec_env_t,
+    instance: wasm_module_inst_t,
+) -> Result<serde_json::Value, serde_json::Value> {
     let get_wasm_memory_buffer_pointer =
         lookup_function(instance, "get_wasm_memory_buffer_pointer").unwrap();
 
@@ -185,7 +190,7 @@ fn call_function(
     unsafe {
         // We need to pass in the correct amount of return values, hence this thing.
         let mut results = if has_retval {
-            // This will be overwritten by a return value, hence we can use uninitialized memory.
+            // This will be overwritten by the return value, hence we can use uninitialized memory.
             vec![MaybeUninit::uninit().assume_init()]
         } else {
             vec![]
@@ -208,7 +213,7 @@ fn call_function(
             }
         } else {
             Err(anyhow::anyhow!(
-                "Call failed: {}",
+                "call failed: {}",
                 CStr::from_ptr(wasm_runtime_get_exception(instance)).to_string_lossy()
             ))
         }
@@ -228,6 +233,6 @@ fn lookup_function(
     if !start_func.is_null() {
         Ok(start_func)
     } else {
-        Err(anyhow::anyhow!("Function {} not found", func_name))
+        Err(anyhow::anyhow!("function `{}` not found", func_name))
     }
 }
