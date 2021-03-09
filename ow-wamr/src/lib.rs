@@ -5,6 +5,8 @@ use std::{
     ptr::{null, slice_from_raw_parts},
 };
 
+use anyhow::bail;
+
 use wamr_sys::*;
 
 pub fn run_module() -> anyhow::Result<()> {
@@ -16,9 +18,15 @@ pub fn run_module() -> anyhow::Result<()> {
     const HEAP_SIZE: u32 = 1024;
 
     unsafe {
+        let time = std::time::Instant::now();
+
         if !wasm_runtime_init() {
-            anyhow::bail!("runtime_init failed");
+            bail!("runtime_init failed");
         }
+
+        println!("wasm_runtime_init: {}ms", time.elapsed().as_millis());
+
+        let time = std::time::Instant::now();
 
         let module = wasm_runtime_load(
             wasm_module_bytes.as_ptr(),
@@ -27,9 +35,10 @@ pub fn run_module() -> anyhow::Result<()> {
             error_buf.len() as u32,
         );
 
+        println!("wasm_runtime_load: {}ms", time.elapsed().as_millis());
 
         if module.is_null() {
-            panic!(
+            bail!(
                 "Module is null: {}",
                 CStr::from_ptr(error_buf.as_ptr()).to_string_lossy()
             );
@@ -59,6 +68,8 @@ pub fn run_module() -> anyhow::Result<()> {
             1,
         );
 
+        let time = std::time::Instant::now();
+
         let module_inst = wasm_runtime_instantiate(
             module,
             STACK_SIZE,
@@ -67,17 +78,26 @@ pub fn run_module() -> anyhow::Result<()> {
             error_buf.len() as u32,
         );
 
+        println!("wasm_runtime_instantiate: {}ms", time.elapsed().as_millis());
+
         if module_inst.is_null() {
-            panic!(
+            bail!(
                 "Instatiated module is null: {}",
                 CStr::from_ptr(error_buf.as_ptr()).to_string_lossy()
             );
         }
 
+        let time = std::time::Instant::now();
+
         let exec_env = wasm_runtime_create_exec_env(module_inst, STACK_SIZE);
 
+        println!(
+            "wasm_runtime_create_exec_env: {}ms",
+            time.elapsed().as_millis()
+        );
+
         if exec_env.is_null() {
-            panic!(
+            bail!(
                 "Exec env is null: {}",
                 CStr::from_ptr(error_buf.as_ptr()).to_string_lossy()
             );
@@ -85,20 +105,31 @@ pub fn run_module() -> anyhow::Result<()> {
 
         pass_string_arg(exec_env, module_inst, json_bytes)?;
 
+        let time = std::time::Instant::now();
+
         let start_func = wasm_runtime_lookup_wasi_start_function(module_inst);
 
+        println!(
+            "wasm_runtime_lookup_wasi_start_function: {}ms",
+            time.elapsed().as_millis()
+        );
+
         if start_func.is_null() {
-            panic!(
+            bail!(
                 "start func is null: {}",
                 CStr::from_ptr(error_buf.as_ptr()).to_string_lossy()
             );
         }
+
+        let time = std::time::Instant::now();
 
         call_function(exec_env, module_inst, start_func, false, vec![])?;
 
         let ret_val = get_return_value(exec_env, module_inst);
 
         println!("{}", serde_json::to_string_pretty(&ret_val).unwrap());
+
+        println!("call_function: {}ms", time.elapsed().as_millis());
     }
 
     Ok(())
