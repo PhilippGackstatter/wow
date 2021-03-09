@@ -1,5 +1,5 @@
 [package]
-name = "openwhisk-wasm-runtime"
+name = "ow-executor"
 version = "0.1.0"
 authors = ["PhilippGackstatter <philipp.gackstatter@student.tuwien.ac.at>"]
 edition = "2018"
@@ -7,8 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
-name = "wasmruntime"
-path = "src/bin/wasmruntime.rs"
+name = "executor"
+path = "src/bin/executor.rs"
 
 [dependencies]
 async-std = { version = "1.6.3", features = ["unstable", "attributes"] }
@@ -18,18 +18,13 @@ tide-tracing = "0.0.7"
 async-trait = "0.1.40"
 serde_json = "1.0.57"
 serde = { version = "1.0", features = ["derive"] }
-cap-std = "0.13.6"
-wasmtime = "0.23.0"
-wasmtime-wasi = "0.23.0"
-wasi-cap-std-sync = "0.23.0"
-wasmer = { version = "1.0", features = ["native"] }
-wasmer-wasi = "1.0"
 anyhow = "1.0"
-tempfile = "3.1.0"
 tracing-subscriber = "0.2"
-base64 = "0.13.0"
-dashmap = "4.0.2"
-reqwest = { version = "0.11", features = ["blocking"] }
+
+ow-common = { path = "../ow-common" }
+ow-wamr = { path = "../ow-wamr" }
+ow-wasmtime = { path = "../ow-wasmtime" }
+ow-wasmer = { path = "../ow-wasmer" }
 
 [features]
 wasmtime_rt = []

@@ -3,7 +3,7 @@ mod runtime_tests {
 
     use std::fs::read;
 
-    use crate::types::{ActionCapabilities, WasmRuntime};
+    use ow_common::{ActionCapabilities, WasmRuntime};
 
     #[cfg(test)]
     pub fn execute_precompiled_wasm(
@@ -14,10 +14,10 @@ mod runtime_tests {
         let module_bytes = String::from_utf8(module_bytes).unwrap();
 
         #[cfg(feature = "wasmtime_rt")]
-        let runtime = crate::wasmtime::Wasmtime::default();
+        let runtime = ow_wasmtime::Wasmtime::default();
 
         #[cfg(feature = "wasmer_rt")]
-        let runtime = crate::wasmer::Wasmer::default();
+        let runtime = ow_wasmer::Wasmer::default();
 
         runtime
             .initialize_action("action_name".to_owned(), capabilities, module_bytes)
@@ -128,7 +128,6 @@ mod runtime_tests {
             execute_precompiled_wasm(wasm_bytes, capabilities, serde_json::json!({})).unwrap();
 
         let req_time = res.get("request_time").unwrap().as_i64().unwrap();
-        println!("{}", req_time);
-        assert!(req_time > 999);
+        assert!(req_time > 1);
     }
 }

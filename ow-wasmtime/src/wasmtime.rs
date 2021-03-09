@@ -8,12 +8,12 @@ use std::{
 
 use anyhow::anyhow;
 use cap_std::fs::Dir;
-use dashmap::DashMap;
 use wasi_cap_std_sync::WasiCtxBuilder;
 use wasmtime::{Config, Engine, Instance, Linker, Module, Store};
 use wasmtime_wasi::{Wasi, WasiCtx};
+use dashmap::DashMap;
 
-use crate::types::{ActionCapabilities, WasmAction, WasmRuntime};
+use ow_common::{ActionCapabilities, WasmAction, WasmRuntime, util};
 
 #[derive(Clone)]
 pub struct Wasmtime {
@@ -37,7 +37,7 @@ impl WasmRuntime for Wasmtime {
         capabilities: ActionCapabilities,
         module_bytes_b64: String,
     ) -> anyhow::Result<()> {
-        let module_bytes = crate::util::b64_decode(module_bytes_b64)?;
+        let module_bytes = util::b64_decode(module_bytes_b64)?;
 
         let module = Module::deserialize(&self.engine, &module_bytes)?;
 

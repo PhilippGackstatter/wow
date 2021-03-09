@@ -18,6 +18,6 @@ build-bin-examples:
     cd ..
     python3 make_bin_actions.py
 
-precompile mod_name="*.wasm":
+precompile mod_name="*":
     cd wasm_precompiler && cargo run --bin wasmer ../target/wasm32-wasi/release/examples/{{mod_name}}.wasm && cd ..
     cd wasm_precompiler && cargo run --bin wasmtime ../target/wasm32-wasi/release/examples/{{mod_name}}.wasm && cd ..

@@ -5,7 +5,7 @@ use dashmap::DashMap;
 use wasmer::{Instance, Module, Store};
 use wasmer_wasi::{WasiEnv, WasiState};
 
-use crate::types::{ActionCapabilities, WasmAction, WasmRuntime};
+use ow_common::{ActionCapabilities, WasmAction, WasmRuntime, util};
 
 #[derive(Clone)]
 pub struct Wasmer {
@@ -29,7 +29,7 @@ impl WasmRuntime for Wasmer {
         capabilities: ActionCapabilities,
         module_bytes_b64: String,
     ) -> anyhow::Result<()> {
-        let module_bytes = crate::util::b64_decode(module_bytes_b64)?;
+        let module_bytes = util::b64_decode(module_bytes_b64)?;
 
         let module = unsafe { Module::deserialize(&self.store, &module_bytes)? };
 

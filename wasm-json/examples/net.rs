@@ -12,7 +12,7 @@ extern {
 pub fn func(_json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error> {
     let request_time = std::time::Instant::now();
 
-    let req = unsafe { get() };
+    let _req = unsafe { get() };
 
     Ok(serde_json::json!({
         "request_time": request_time.elapsed().as_millis() as u64,

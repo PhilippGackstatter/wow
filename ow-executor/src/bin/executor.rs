@@ -1,16 +1,14 @@
-extern crate tide;
-
-use openwhisk_wasm_runtime::core;
+use ow_executor::core;
 use tide_tracing::TraceMiddleware;
 use tracing::Level;
 
 #[async_std::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(feature = "wasmtime_rt")]
-    let runtime = openwhisk_wasm_runtime::wasmtime::Wasmtime::default();
+    let runtime = ow_wasmtime::Wasmtime::default();
 
     #[cfg(feature = "wasmer_rt")]
-    let runtime = openwhisk_wasm_runtime::wasmer::Wasmer::default();
+    let runtime = ow_wasmer::Wasmer::default();
 
     let subscriber = tracing_subscriber::fmt()
         .with_max_level(Level::TRACE)

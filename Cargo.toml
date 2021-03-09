@@ -1,2 +1,11 @@
 [workspace]
-members = ["openwhisk-wasm-runtime", "wasm-json", "wasm_precompiler", "bench"]
+members = [
+    "ow-executor",
+    "ow-wasmer",
+    "ow-common",
+    "ow-wasmtime",
+    "ow-wamr",
+    "wasm-json",
+    "wasm_precompiler",
+    "bench",
+]
