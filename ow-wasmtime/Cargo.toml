@@ -16,6 +16,6 @@ wasmer-wasi = "1.0"
 tempfile = "3.1.0"
 base64 = "0.13.0"
 dashmap = "4.0.2"
-reqwest = { version = "0.11", features = ["blocking"] }
+reqwest = { version = "0.11", features = ["blocking", "rustls-tls"], default-features = false }
 
-ow-common = { path = "../ow-common"}
+ow-common = { path = "../ow-common" }

@@ -5,7 +5,7 @@ use dashmap::DashMap;
 use wasmer::{Instance, Module, Store};
 use wasmer_wasi::{WasiEnv, WasiState};
 
-use ow_common::{ActionCapabilities, WasmAction, WasmRuntime, util};
+use ow_common::{util, ActionCapabilities, WasmAction, WasmRuntime};
 
 #[derive(Clone)]
 pub struct Wasmer {

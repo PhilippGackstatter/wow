@@ -8,12 +8,12 @@ use std::{
 
 use anyhow::anyhow;
 use cap_std::fs::Dir;
+use dashmap::DashMap;
 use wasi_cap_std_sync::WasiCtxBuilder;
 use wasmtime::{Config, Engine, Instance, Linker, Module, Store};
 use wasmtime_wasi::{Wasi, WasiCtx};
-use dashmap::DashMap;
 
-use ow_common::{ActionCapabilities, WasmAction, WasmRuntime, util};
+use ow_common::{util, ActionCapabilities, WasmAction, WasmRuntime};
 
 #[derive(Clone)]
 pub struct Wasmtime {
