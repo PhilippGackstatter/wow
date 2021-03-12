@@ -3,7 +3,7 @@ use tide_tracing::TraceMiddleware;
 use tracing::Level;
 
 #[async_std::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> anyhow::Result<()> {
     #[cfg(feature = "wasmtime_rt")]
     let runtime = ow_wasmtime::Wasmtime::default();
 

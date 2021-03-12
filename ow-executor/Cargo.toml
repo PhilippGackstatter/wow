@@ -22,10 +22,10 @@ anyhow = "1.0"
 tracing-subscriber = "0.2"
 
 ow-common = { path = "../ow-common" }
-ow-wamr = { path = "../ow-wamr" }
-ow-wasmtime = { path = "../ow-wasmtime" }
-ow-wasmer = { path = "../ow-wasmer" }
+ow-wamr = { path = "../ow-wamr", optional = true  }
+ow-wasmtime = { path = "../ow-wasmtime", optional = true  }
+ow-wasmer = { path = "../ow-wasmer", optional = true  }
 
 [features]
-wasmtime_rt = []
-wasmer_rt = []
+wasmtime_rt = ["ow-wasmtime"]
+wasmer_rt = ["ow-wasmer"]
