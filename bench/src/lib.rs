@@ -2,9 +2,7 @@ use std::collections::HashMap;
 
 use async_std::{eprintln, println};
 use futures::{stream::FuturesUnordered, Future, StreamExt};
-use openwhisk_wasm_runtime::types::{
-    ActionCapabilities, ActivationContext, ActivationInit, ActivationInitInner,
-};
+use ow_common::{ActionCapabilities, ActivationContext, ActivationInit, ActivationInitInner};
 use serde_json::Value;
 
 const SERVER_URI: &'static str = "http://127.0.0.1:9000";

@@ -5,7 +5,7 @@ authors = ["PhilippGackstatter <philipp.gackstatter@student.tuwien.ac.at>"]
 edition = "2018"
 
 [dependencies]
-openwhisk-wasm-runtime = { path = "../openwhisk-wasm-runtime" }
+ow-common = { path = "../ow-common" }
 async-std = { version = "1.6.3", features = ["unstable", "attributes"] }
 surf = "2.1.0"
 futures = "0.3"
