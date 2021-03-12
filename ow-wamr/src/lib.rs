@@ -13,7 +13,7 @@ pub fn run_module() -> anyhow::Result<()> {
     let wasm_module_bytes = include_bytes!(
         "/home/morgan/git/wasm-openwhisk/target/wasm32-wasi/release/examples/add.wasm"
     );
-    let mut error_buf: Vec<i8> = vec![32; 128];
+    let mut error_buf: Vec<c_char> = vec![32; 128];
     const STACK_SIZE: u32 = 8092;
     const HEAP_SIZE: u32 = 1024;
 
@@ -55,7 +55,7 @@ pub fn run_module() -> anyhow::Result<()> {
             .map(|arg| arg.as_ptr())
             .collect::<Vec<*const c_char>>();
 
-        let null_ptr = 0 as *mut *const i8;
+        let null_ptr = 0 as *mut *const c_char;
         wasm_runtime_set_wasi_args(
             module,
             null_ptr,
@@ -64,7 +64,7 @@ pub fn run_module() -> anyhow::Result<()> {
             0,
             null_ptr,
             0,
-            c_args.as_ptr() as *mut *mut i8,
+            c_args.as_ptr() as *mut *mut c_char,
             1,
         );
 
