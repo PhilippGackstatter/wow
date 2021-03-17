@@ -43,6 +43,12 @@ impl WasmRuntime for Wasmer {
         Ok(())
     }
 
+    fn destroy(&self, container_id: &str) {
+        if let None = self.modules.remove(container_id) {
+            println!("No container with id {} existed.", container_id);
+        }
+    }
+
     fn execute(
         &self,
         action_name: &str,
