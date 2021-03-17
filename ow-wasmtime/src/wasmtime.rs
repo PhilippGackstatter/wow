@@ -71,7 +71,7 @@ impl WasmRuntime for Wasmtime {
         let wasi = Wasi::new(&store, ctx);
         wasi.add_to_linker(&mut linker)?;
 
-        if wasm_action.capabilities.net_access {
+        if let Some(true) = wasm_action.capabilities.net_access {
             link_net(&mut linker)?;
         }
 
