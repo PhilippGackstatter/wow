@@ -16,7 +16,13 @@ build-bin-examples:
     cd wasm-json &&\
     cargo build --release --examples --target x86_64-unknown-linux-musl --no-default-features --features bin &&\
     cd ..
-    python3 make_bin_actions.py
+    python3 make_bin_actions.py "target/x86_64-unknown-linux-musl/release/examples"
+
+build-aarch64-bin-examples:
+    cd wasm-json &&\
+    cargo build --release --examples --target aarch64-unknown-linux-musl --no-default-features --features bin &&\
+    cd ..
+    python3 make_bin_actions.py "target/aarch64-unknown-linux-musl/release/examples"
 
 precompile mod_name="*":
     cd wasm_precompiler && cargo run --bin wasmer ../target/wasm32-wasi/release/examples/{{mod_name}}.wasm && cd ..
