@@ -10,15 +10,14 @@ struct RuntimeResponse {
     port: i32,
 }
 
-pub async fn start(mut _req: Request<impl WasmRuntime>) -> tide::Result<serde_json::Value> {
-    // println!("start called with {:#?}", req.body_string().await);
+pub async fn destroy(mut req: Request<impl WasmRuntime>) -> tide::Result<StatusCode> {
+    let container_id = req.body_string().await?;
 
-    let resp = RuntimeResponse {
-        container_id: "1".into(),
-        port: 9000,
-    };
+    println!("Removing container with id {}", container_id);
 
-    Ok(serde_json::to_value(resp).unwrap())
+    req.state().destroy(&container_id);
+
+    Ok(StatusCode::Ok)
 }
 
 pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<StatusCode> {
@@ -32,19 +31,14 @@ pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<StatusCode
 
     println!("/init {:#?}", activation_init);
 
-    let action_name = activation_init
-        .value
-        .env
-        .get("__OW_ACTION_NAME")
-        .ok_or_else(|| {
-            tide::Error::from_str(StatusCode::BadRequest, "Missing __OW_ACTION_NAME property")
-        })?
-        .clone();
+    let container_id = req.param("container_id").unwrap().to_owned();
+
+    println!("Initializing container with id {}", container_id);
 
     let runtime = req.state();
 
     runtime.initialize_action(
-        action_name,
+        container_id,
         activation_init.value.annotations,
         activation_init.value.code,
     )?;
@@ -59,11 +53,16 @@ pub async fn run(
 
     println!("/run {:#?}", activation_context);
 
+    println!(
+        "Running container with id {}",
+        req.param("container_id").unwrap()
+    );
+
     // Create a cheap clone of the runtime that can be moved onto another thread
     let runtime = req.state().clone();
 
     let result = task::spawn_blocking(move || {
-        runtime.execute(&activation_context.action_name, activation_context.value)
+        runtime.execute(req.param("container_id").unwrap(), activation_context.value)
     })
     .await;
 

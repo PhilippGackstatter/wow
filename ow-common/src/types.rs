@@ -126,6 +126,8 @@ pub trait WasmRuntime: Clone {
         module_bytes_b64: String,
     ) -> anyhow::Result<()>;
 
+    fn destroy(&self, container_id: &str);
+
     fn execute(
         &self,
         action_name: &str,

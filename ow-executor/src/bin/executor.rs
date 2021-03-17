@@ -19,9 +19,9 @@ async fn main() -> anyhow::Result<()> {
     let mut app = tide::with_state(runtime);
     app.with(TraceMiddleware::new());
 
-    app.at("/start").post(core::start);
-    app.at("/init").post(core::init);
-    app.at("/run").post(core::run);
+    app.at("/:container_id/destroy").post(core::destroy);
+    app.at("/:container_id/init").post(core::init);
+    app.at("/:container_id/run").post(core::run);
 
     app.listen("127.0.0.1:9000").await.unwrap();
 
