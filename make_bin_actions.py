@@ -1,7 +1,6 @@
 import os
 import zipfile
-
-EXAMPLE_TARGET_FOLDER = "target/x86_64-unknown-linux-musl/release/examples"
+import sys
 
 
 def get_binary_names():
@@ -10,11 +9,13 @@ def get_binary_names():
 
 def zip_functions(binary_names):
 
+    example_target_directory = sys.argv[1]
+
     for binary in binary_names:
 
-        binary_path = f"{EXAMPLE_TARGET_FOLDER}/{binary}"
+        binary_path = f"{example_target_directory}/{binary}"
 
-        with zipfile.ZipFile(f"{EXAMPLE_TARGET_FOLDER}/{binary}.zip", "w") as zip:
+        with zipfile.ZipFile(f"{example_target_directory}/{binary}.zip", "w") as zip:
             zip.write(binary_path, arcname="exec")
 
 
