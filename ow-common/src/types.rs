@@ -121,7 +121,7 @@ pub struct WasmAction<M> {
 pub trait WasmRuntime: Clone {
     fn initialize_action(
         &self,
-        action_name: String,
+        container_id: String,
         capabilities: ActionCapabilities,
         module_bytes_b64: String,
     ) -> anyhow::Result<()>;
@@ -130,7 +130,7 @@ pub trait WasmRuntime: Clone {
 
     fn execute(
         &self,
-        action_name: &str,
+        container_id: &str,
         parameters: serde_json::Value,
     ) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error>;
 }

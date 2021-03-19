@@ -16,14 +16,14 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::subscriber::set_global_default(subscriber).expect("no global subscriber has been set");
 
-    let mut app = tide::with_state(runtime);
-    app.with(TraceMiddleware::new());
+    let mut executor = tide::with_state(runtime);
+    executor.with(TraceMiddleware::new());
 
-    app.at("/:container_id/destroy").post(core::destroy);
-    app.at("/:container_id/init").post(core::init);
-    app.at("/:container_id/run").post(core::run);
+    executor.at("/:container_id/destroy").post(core::destroy);
+    executor.at("/:container_id/init").post(core::init);
+    executor.at("/:container_id/run").post(core::run);
 
-    app.listen("127.0.0.1:9000").await.unwrap();
+    executor.listen("127.0.0.1:9000").await.unwrap();
 
     Ok(())
 }

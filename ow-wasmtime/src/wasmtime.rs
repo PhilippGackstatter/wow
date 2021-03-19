@@ -33,7 +33,7 @@ impl Default for Wasmtime {
 impl WasmRuntime for Wasmtime {
     fn initialize_action(
         &self,
-        action_name: String,
+        container_id: String,
         capabilities: ActionCapabilities,
         module_bytes_b64: String,
     ) -> anyhow::Result<()> {
@@ -46,7 +46,7 @@ impl WasmRuntime for Wasmtime {
             capabilities,
         };
 
-        self.modules.insert(action_name, action);
+        self.modules.insert(container_id, action);
 
         Ok(())
     }
@@ -59,7 +59,7 @@ impl WasmRuntime for Wasmtime {
 
     fn execute(
         &self,
-        action_name: &str,
+        container_id: &str,
         parameters: serde_json::Value,
     ) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error> {
         let store = Store::new(&self.engine);
@@ -70,8 +70,8 @@ impl WasmRuntime for Wasmtime {
 
         let wasm_action = self
             .modules
-            .get(action_name)
-            .ok_or_else(|| anyhow!(format!("No action named {}", action_name)))?;
+            .get(container_id)
+            .ok_or_else(|| anyhow!(format!("No action named {}", container_id)))?;
 
         let ctx = build_wasi_context(&wasm_action.capabilities, json_bytes.len())?;
         let wasi = Wasi::new(&store, ctx);
