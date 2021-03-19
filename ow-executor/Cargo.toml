@@ -29,3 +29,4 @@ ow-wasmer = { path = "../ow-wasmer", optional = true  }
 [features]
 wasmtime_rt = ["ow-wasmtime"]
 wasmer_rt = ["ow-wasmer"]
+wamr_rt = ["ow-wamr"]

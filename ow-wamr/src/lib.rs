@@ -9,10 +9,7 @@ use anyhow::bail;
 
 use wamr_sys::*;
 
-pub fn run_module() -> anyhow::Result<()> {
-    let wasm_module_bytes = include_bytes!(
-        "/home/morgan/git/wasm-openwhisk/target/wasm32-wasi/release/examples/add.wasm"
-    );
+pub fn run_module(wasm_module_bytes: Vec<u8>) -> anyhow::Result<()> {
     let mut error_buf: Vec<c_char> = vec![32; 128];
     const STACK_SIZE: u32 = 8092;
     const HEAP_SIZE: u32 = 1024;
