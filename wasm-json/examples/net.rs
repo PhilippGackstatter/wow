@@ -5,7 +5,7 @@ wasm_json::pass_json!(func);
 wasm_json::json_args!(func);
 
 #[link(wasm_import_module = "http")]
-extern {
+extern "C" {
     fn get() -> i32;
 }
 
