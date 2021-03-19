@@ -31,7 +31,7 @@ impl Default for Wasmtime {
 }
 
 impl WasmRuntime for Wasmtime {
-    fn initialize_action(
+    fn initialize(
         &self,
         container_id: String,
         capabilities: ActionCapabilities,
@@ -57,7 +57,7 @@ impl WasmRuntime for Wasmtime {
         }
     }
 
-    fn execute(
+    fn run(
         &self,
         container_id: &str,
         parameters: serde_json::Value,

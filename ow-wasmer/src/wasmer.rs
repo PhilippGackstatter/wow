@@ -23,7 +23,7 @@ impl Default for Wasmer {
 }
 
 impl WasmRuntime for Wasmer {
-    fn initialize_action(
+    fn initialize(
         &self,
         container_id: String,
         capabilities: ActionCapabilities,
@@ -49,7 +49,7 @@ impl WasmRuntime for Wasmer {
         }
     }
 
-    fn execute(
+    fn run(
         &self,
         container_id: &str,
         parameters: serde_json::Value,

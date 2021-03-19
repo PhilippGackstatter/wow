@@ -37,7 +37,7 @@ pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<StatusCode
 
     let runtime = req.state();
 
-    runtime.initialize_action(
+    runtime.initialize(
         container_id,
         activation_init.value.annotations,
         activation_init.value.code,
@@ -62,7 +62,7 @@ pub async fn run(
     let runtime = req.state().clone();
 
     let result = task::spawn_blocking(move || {
-        runtime.execute(req.param("container_id").unwrap(), activation_context.value)
+        runtime.run(req.param("container_id").unwrap(), activation_context.value)
     })
     .await;
 

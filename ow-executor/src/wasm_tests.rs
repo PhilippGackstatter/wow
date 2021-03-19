@@ -20,10 +20,10 @@ mod runtime_tests {
         let runtime = ow_wasmer::Wasmer::default();
 
         runtime
-            .initialize_action("action_name".to_owned(), capabilities, module_bytes)
+            .initialize("action_name".to_owned(), capabilities, module_bytes)
             .unwrap();
 
-        let result = runtime.execute("action_name", input).unwrap();
+        let result = runtime.run("action_name", input).unwrap();
 
         result
     }
