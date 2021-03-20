@@ -19,6 +19,9 @@ mod runtime_tests {
         #[cfg(feature = "wasmer_rt")]
         let runtime = ow_wasmer::Wasmer::default();
 
+        #[cfg(feature = "wamr_rt")]
+        let runtime = ow_wamr::Wamr::default();
+
         runtime
             .initialize("action_name".to_owned(), capabilities, module_bytes)
             .unwrap();
@@ -37,8 +40,17 @@ mod runtime_tests {
         #[cfg(feature = "wasmer_rt")]
         path.push_str(".wasmer");
 
-        let contents = read(path).unwrap();
-        contents
+        #[cfg(feature = "wamr_rt")]
+        path.push_str(".wamr");
+
+        let path: std::path::PathBuf = path.into();
+
+        if path.exists() {
+            let contents = read(path).unwrap();
+            contents
+        } else {
+            panic!("{:?} does not exist", path);
+        }
     }
 
     #[test]
@@ -120,7 +132,7 @@ mod runtime_tests {
         let wasm_bytes = get_module_bytes("../target/wasm32-wasi/release/examples/net");
 
         let capabilities = ActionCapabilities {
-            net_access: true,
+            net_access: Some(true),
             ..Default::default()
         };
 

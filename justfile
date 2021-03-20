@@ -1,12 +1,11 @@
 # cargos --feature option cannot be combined with --package because of
 # missing virtual workspaces support :(
 
-test testname="":
-    cargo build --release --examples --target wasm32-wasi
-    cargo test --package openwhisk-wasm-runtime {{testname}} -- --nocapture --test-threads=1
+test testname="" runtime="wasmtime_rt":
+    cd ow-executor && cargo test --package ow-executor --features {{runtime}} {{testname}} -- --nocapture --test-threads=1
 
 build runtime="":
-    cd openwhisk-wasm-runtime && cargo build --release --features {{runtime}}
+    cd ow-executor && cargo build --release --features {{runtime}} --target armv7-unknown-linux-gnueabihf
 
 build-wasm-examples:
     cd wasm-json && cargo build --release --features wasm --no-default-features --examples --target wasm32-wasi

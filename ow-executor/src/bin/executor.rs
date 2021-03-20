@@ -10,6 +10,9 @@ async fn main() -> anyhow::Result<()> {
     #[cfg(feature = "wasmer_rt")]
     let runtime = ow_wasmer::Wasmer::default();
 
+    #[cfg(feature = "wamr_rt")]
+    let runtime = ow_wamr::Wamr::default();
+
     let subscriber = tracing_subscriber::fmt()
         .with_max_level(Level::TRACE)
         .finish();

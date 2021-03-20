@@ -2210,6 +2210,8 @@ name = "ow-wamr"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "dashmap",
+ "ow-common",
  "serde_json",
  "wamr-sys",
 ]

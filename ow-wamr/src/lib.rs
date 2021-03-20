@@ -3,13 +3,72 @@ use std::{
     mem::MaybeUninit,
     os::raw::c_char,
     ptr::{null, slice_from_raw_parts},
+    sync::Arc,
 };
 
-use anyhow::bail;
+use anyhow::{anyhow, bail};
+use dashmap::DashMap;
+use ow_common::{util, ActionCapabilities, WasmAction, WasmRuntime};
 
 use wamr_sys::*;
 
-pub fn run_module(wasm_module_bytes: Vec<u8>) -> anyhow::Result<()> {
+#[derive(Clone)]
+pub struct Wamr {
+    pub modules: Arc<DashMap<String, WasmAction<Vec<u8>>>>,
+}
+
+impl Default for Wamr {
+    fn default() -> Self {
+        Self {
+            modules: Arc::new(DashMap::new()),
+        }
+    }
+}
+
+impl WasmRuntime for Wamr {
+    fn initialize(
+        &self,
+        container_id: String,
+        capabilities: ActionCapabilities,
+        module_bytes_b64: String,
+    ) -> anyhow::Result<()> {
+        let module = util::b64_decode(module_bytes_b64)?;
+
+        let action = WasmAction {
+            module,
+            capabilities,
+        };
+
+        self.modules.insert(container_id, action);
+
+        Ok(())
+    }
+
+    fn run(
+        &self,
+        container_id: &str,
+        parameters: serde_json::Value,
+    ) -> Result<Result<serde_json::Value, serde_json::Value>, anyhow::Error> {
+        let wasm_action = self
+            .modules
+            .get(container_id)
+            .ok_or_else(|| anyhow!(format!("No action named {}", container_id)))?;
+
+        wamr_run_module(&wasm_action.capabilities, &wasm_action.module, &parameters)
+    }
+
+    fn destroy(&self, container_id: &str) {
+        if let None = self.modules.remove(container_id) {
+            println!("No container with id {} existed.", container_id);
+        }
+    }
+}
+
+pub fn wamr_run_module(
+    capabilities: &ActionCapabilities,
+    wasm_module_bytes: &Vec<u8>,
+    parameters: &serde_json::Value,
+) -> anyhow::Result<Result<serde_json::Value, serde_json::Value>> {
     let mut error_buf: Vec<c_char> = vec![32; 128];
     const STACK_SIZE: u32 = 8092;
     const HEAP_SIZE: u32 = 1024;
@@ -36,23 +95,24 @@ pub fn run_module(wasm_module_bytes: Vec<u8>) -> anyhow::Result<()> {
 
         if module.is_null() {
             bail!(
-                "Module is null: {}",
+                "wasm_runtime_load: {}",
                 CStr::from_ptr(error_buf.as_ptr()).to_string_lossy()
             );
         }
 
-        let json_bytes =
-            serde_json::to_vec(&serde_json::json!({"param1": 5, "param2": 4})).unwrap();
+        // TODO: Grant capabilities
 
-        let json_bytes_len = json_bytes.len();
-        let args = vec![CString::new(format!("{}", json_bytes_len)).unwrap()];
+        let json_bytes = serde_json::to_vec(&parameters).unwrap();
 
-        let c_args = args
-            .iter()
-            .map(|arg| arg.as_ptr())
-            .collect::<Vec<*const c_char>>();
+        let mut args = vec![CString::new(format!("{}", json_bytes.len())).unwrap()];
+
+        let mut c_args = args
+            .iter_mut()
+            .map(|arg| arg.as_ptr() as *mut c_char)
+            .collect::<Vec<*mut c_char>>();
 
         let null_ptr = 0 as *mut *const c_char;
+
         wasm_runtime_set_wasi_args(
             module,
             null_ptr,
@@ -61,7 +121,7 @@ pub fn run_module(wasm_module_bytes: Vec<u8>) -> anyhow::Result<()> {
             0,
             null_ptr,
             0,
-            c_args.as_ptr() as *mut *mut c_char,
+            c_args.as_mut_ptr() as *mut *mut c_char,
             1,
         );
 
@@ -79,7 +139,7 @@ pub fn run_module(wasm_module_bytes: Vec<u8>) -> anyhow::Result<()> {
 
         if module_inst.is_null() {
             bail!(
-                "Instatiated module is null: {}",
+                "wasm_runtime_instantiate: {}",
                 CStr::from_ptr(error_buf.as_ptr()).to_string_lossy()
             );
         }
@@ -95,7 +155,7 @@ pub fn run_module(wasm_module_bytes: Vec<u8>) -> anyhow::Result<()> {
 
         if exec_env.is_null() {
             bail!(
-                "Exec env is null: {}",
+                "wasm_runtime_create_exec_env: {}",
                 CStr::from_ptr(error_buf.as_ptr()).to_string_lossy()
             );
         }
@@ -113,7 +173,7 @@ pub fn run_module(wasm_module_bytes: Vec<u8>) -> anyhow::Result<()> {
 
         if start_func.is_null() {
             bail!(
-                "start func is null: {}",
+                "wasm_runtime_lookup_wasi_start_function: {}",
                 CStr::from_ptr(error_buf.as_ptr()).to_string_lossy()
             );
         }
@@ -124,12 +184,10 @@ pub fn run_module(wasm_module_bytes: Vec<u8>) -> anyhow::Result<()> {
 
         let ret_val = get_return_value(exec_env, module_inst);
 
-        println!("{}", serde_json::to_string_pretty(&ret_val).unwrap());
-
         println!("call_function: {}ms", time.elapsed().as_millis());
-    }
 
-    Ok(())
+        Ok(ret_val)
+    }
 }
 
 pub fn pass_string_arg(
