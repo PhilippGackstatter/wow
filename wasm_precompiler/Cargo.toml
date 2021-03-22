@@ -13,3 +13,4 @@ wasmer = { version = "1.0", features = ["native", "llvm", "jit"] }
 wasmer-compiler-llvm = "1.0"
 clap = "2.33"
 base64 = "0.13.0"
+zip = "0.5.11"

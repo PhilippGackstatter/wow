@@ -6,7 +6,10 @@ function module_basename --argument path
 end
 
 for arg in $argv
+    echo $arg
     set mod_name (module_basename $arg)
     set dir_name (dirname $arg)
-    wamrc --target=armv7 --enable-simd --opt-level=0 -o "$dir_name/$mod_name.wamr" $arg
+    # --target=armv7
+    wamrc --opt-level=0 -o "$mod_name.wamr" $arg
+    zip -m "$dir_name/$mod_name-wamr.zip" "$mod_name.wamr"
 end

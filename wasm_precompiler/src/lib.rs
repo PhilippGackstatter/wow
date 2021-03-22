@@ -40,17 +40,29 @@ fn write_precompiled(
     let mut new_filepath = file_path.parent().unwrap().to_owned();
 
     let new_file_stem =
-        file_path.file_stem().unwrap().to_string_lossy().to_string() + "." + runtime_name;
+        file_path.file_stem().unwrap().to_string_lossy().to_string() + "-" + runtime_name + ".zip";
 
     new_filepath.push(new_file_stem);
 
     println!("Serializing precompiled bytes to {:?}", new_filepath);
 
-    let mut file = File::create(new_filepath)?;
+    let file = File::create(new_filepath)?;
 
-    let binary_as_text = base64::encode(precompiled);
+    write_zip(file, precompiled)?;
 
-    file.write(binary_as_text.as_bytes())?;
+    Ok(())
+}
+
+fn write_zip(file: File, bytes: Vec<u8>) -> anyhow::Result<()> {
+    let mut zip = zip::ZipWriter::new(file);
+
+    let options =
+        zip::write::FileOptions::default().compression_method(zip::CompressionMethod::Stored);
+
+    zip.start_file("content", options)?;
+    zip.write_all(&bytes)?;
+
+    zip.finish()?;
 
     Ok(())
 }
