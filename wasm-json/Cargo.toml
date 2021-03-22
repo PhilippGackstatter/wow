@@ -12,6 +12,7 @@ anyhow = "1.0"
 rand = "0.8.3"
 rand_xoshiro = "0.6.0"
 primal = "0.2"
+wee_alloc = "0.4.5"
 
 [features]
 default = ["bin"]
