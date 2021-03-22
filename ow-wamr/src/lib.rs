@@ -8,7 +8,7 @@ use std::{
 
 use anyhow::{anyhow, bail};
 use dashmap::DashMap;
-use ow_common::{util, ActionCapabilities, WasmAction, WasmRuntime};
+use ow_common::{ActionCapabilities, WasmAction, WasmRuntime};
 
 use wamr_sys::*;
 
@@ -30,10 +30,8 @@ impl WasmRuntime for Wamr {
         &self,
         container_id: String,
         capabilities: ActionCapabilities,
-        module_bytes_b64: String,
+        module: Vec<u8>,
     ) -> anyhow::Result<()> {
-        let module = util::b64_decode(module_bytes_b64)?;
-
         let action = WasmAction {
             module,
             capabilities,

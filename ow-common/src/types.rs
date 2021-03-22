@@ -123,7 +123,7 @@ pub trait WasmRuntime: Clone {
         &self,
         container_id: String,
         capabilities: ActionCapabilities,
-        module_bytes_b64: String,
+        module: Vec<u8>,
     ) -> anyhow::Result<()>;
 
     fn run(

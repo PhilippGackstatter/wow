@@ -27,11 +27,9 @@ impl WasmRuntime for Wasmer {
         &self,
         container_id: String,
         capabilities: ActionCapabilities,
-        module_bytes_b64: String,
+        module: Vec<u8>,
     ) -> anyhow::Result<()> {
-        let module_bytes = util::b64_decode(module_bytes_b64)?;
-
-        let module = unsafe { Module::deserialize(&self.store, &module_bytes)? };
+        let module = unsafe { Module::deserialize(&self.store, &module)? };
 
         let action = WasmAction {
             module,

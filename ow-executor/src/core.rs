@@ -1,5 +1,5 @@
 use async_std::task;
-use ow_common::{ActivationContext, ActivationInit, ActivationResponse, WasmRuntime};
+use ow_common::{util, ActivationContext, ActivationInit, ActivationResponse, WasmRuntime};
 use serde::Serialize;
 use tide::{Request, StatusCode};
 
@@ -37,11 +37,11 @@ pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<StatusCode
 
     let runtime = req.state();
 
-    runtime.initialize(
-        container_id,
-        activation_init.value.annotations,
-        activation_init.value.code,
-    )?;
+    let module_bytes = util::b64_decode(activation_init.value.code)?;
+
+    let module = util::unzip(module_bytes)?;
+
+    runtime.initialize(container_id, activation_init.value.annotations, module)?;
 
     Ok(StatusCode::Ok)
 }
