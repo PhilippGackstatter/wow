@@ -4,7 +4,10 @@
 test testname="" runtime="wasmtime_rt":
     cd ow-executor && cargo test --package ow-executor --features {{runtime}} {{testname}} -- --nocapture --test-threads=1
 
-build runtime="":
+build-amd64 runtime="":
+    cd ow-executor && cargo build --release --features {{runtime}}
+
+build-arm runtime="":
     cd ow-executor && cargo build --release --features {{runtime}} --target armv7-unknown-linux-gnueabihf
 
 build-wasm-examples:
