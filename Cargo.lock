@@ -2296,8 +2296,6 @@ dependencies = [
  "serde_json",
  "tempfile",
  "wasi-cap-std-sync",
- "wasmer",
- "wasmer-wasi",
  "wasmtime",
  "wasmtime-wasi",
 ]
