@@ -14,14 +14,35 @@ use ow_common::{ActionCapabilities, WasmAction, WasmRuntime};
 
 use wamr_sys::*;
 
+struct WamrRuntimeState {}
+
+impl Default for WamrRuntimeState {
+    fn default() -> Self {
+        if !unsafe { wasm_runtime_init() } {
+            panic!("runtime_init failed");
+        }
+        WamrRuntimeState {}
+    }
+}
+
+impl Drop for WamrRuntimeState {
+    fn drop(&mut self) {
+        unsafe {
+            wasm_runtime_destroy();
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Wamr {
+    state: Arc<WamrRuntimeState>,
     pub modules: Arc<DashMap<String, WasmAction<Vec<u8>>>>,
 }
 
 impl Default for Wamr {
     fn default() -> Self {
         Self {
+            state: Arc::new(Default::default()),
             modules: Arc::new(DashMap::new()),
         }
     }
@@ -74,14 +95,6 @@ pub fn wamr_run_module(
     const HEAP_SIZE: u32 = 1024;
 
     unsafe {
-        let time = std::time::Instant::now();
-
-        if !wasm_runtime_init() {
-            bail!("runtime_init failed");
-        }
-
-        println!("wasm_runtime_init: {}ms", time.elapsed().as_millis());
-
         let time = std::time::Instant::now();
 
         let module = wasm_runtime_load(
@@ -192,6 +205,10 @@ pub fn wamr_run_module(
         let ret_val = get_return_value(exec_env, module_inst);
 
         println!("call_function: {}ms", time.elapsed().as_millis());
+
+        wasm_runtime_destroy_exec_env(exec_env);
+        wasm_runtime_deinstantiate(module_inst);
+        wasm_runtime_unload(module);
 
         Ok(ret_val)
     }
