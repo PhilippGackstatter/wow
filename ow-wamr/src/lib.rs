@@ -1,7 +1,9 @@
 use std::{
     ffi::{CStr, CString},
+    fs,
     mem::MaybeUninit,
     os::raw::c_char,
+    path::Path,
     ptr::{null, slice_from_raw_parts},
     sync::Arc,
 };
@@ -98,28 +100,35 @@ pub fn wamr_run_module(
             );
         }
 
-        // TODO: Grant capabilities
-
         let json_bytes = serde_json::to_vec(&parameters).unwrap();
-
         let mut args = vec![CString::new(format!("{}", json_bytes.len())).unwrap()];
-
         let mut c_args = args
             .iter_mut()
             .map(|arg| arg.as_ptr() as *mut c_char)
             .collect::<Vec<*mut c_char>>();
 
+        let dir_cap;
+        let mut dir_list = if let Some(dir) = &capabilities.dir {
+            if !Path::new(dir).exists() {
+                fs::create_dir_all(dir)?;
+            }
+            dir_cap = CString::new(dir.clone()).unwrap();
+            vec![dir_cap.as_ptr() as *const c_char]
+        } else {
+            vec![]
+        };
+
         let null_ptr = 0 as *mut *const c_char;
 
         wasm_runtime_set_wasi_args(
             module,
+            dir_list.as_mut_ptr(),
+            dir_list.len() as u32,
             null_ptr,
             0,
             null_ptr,
             0,
-            null_ptr,
-            0,
-            c_args.as_mut_ptr() as *mut *mut c_char,
+            c_args.as_mut_ptr(),
             1,
         );
 
