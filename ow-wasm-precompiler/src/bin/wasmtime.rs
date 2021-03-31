@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use anyhow;
-use wasm_precompiler::{get_filenames, precompile};
+use ow_wasm_precompiler::{get_filenames, precompile};
 
 pub fn precompile_wasmtime(filename: &str) -> anyhow::Result<Vec<u8>> {
     let store = wasmtime::Store::default();

@@ -25,6 +25,6 @@ build-aarch64-bin-examples:
     python3 make_bin_actions.py "target/aarch64-unknown-linux-musl/release/examples"
 
 precompile mod_name="*":
-    cd ow-wasm-precompiler && cargo run --bin wasmer ../target/wasm32-wasi/release/examples/{{mod_name}}.wasm
-    cd ow-wasm-precompiler && cargo run --bin wasmtime ../target/wasm32-wasi/release/examples/{{mod_name}}.wasm
+    ./wasmer_precompile.fish target/wasm32-wasi/release/examples/{{mod_name}}.wasm
+    cd ow-wasm-precompiler && cargo run --release --bin wasmtime ../target/wasm32-wasi/release/examples/{{mod_name}}.wasm
     ./wamrc_precompile.fish target/wasm32-wasi/release/examples/{{mod_name}}.wasm
