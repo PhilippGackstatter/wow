@@ -2272,6 +2272,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "ow-wasm-action"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "primal",
+ "rand 0.8.3",
+ "rand_xoshiro",
+ "serde_json",
+ "wee_alloc",
+]
+
+[[package]]
+name = "ow-wasm-precompiler"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.13.0",
+ "clap",
+ "wasmer",
+ "wasmer-compiler-llvm",
+ "wasmtime",
+ "zip",
+]
+
+[[package]]
 name = "ow-wasmer"
 version = "0.1.0"
 dependencies = [
@@ -3908,31 +3933,6 @@ name = "wasm-bindgen-shared"
 version = "0.2.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d6f8ec44822dd71f5f221a5847fb34acd9060535c1211b70a05844c0f6383b1"
-
-[[package]]
-name = "wasm-json"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "primal",
- "rand 0.8.3",
- "rand_xoshiro",
- "serde_json",
- "wee_alloc",
-]
-
-[[package]]
-name = "wasm_precompiler"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.13.0",
- "clap",
- "wasmer",
- "wasmer-compiler-llvm",
- "wasmtime",
- "zip",
-]
 
 [[package]]
 name = "wasmer"

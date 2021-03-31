@@ -1,8 +1,8 @@
 #[cfg(feature = "wasm")]
-wasm_json::pass_json!(func);
+ow_wasm_action::pass_json!(func);
 
 #[cfg(feature = "bin")]
-wasm_json::json_args!(func);
+ow_wasm_action::json_args!(func);
 
 pub fn func(json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error> {
     let param1 = json

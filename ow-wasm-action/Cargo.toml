@@ -1,5 +1,5 @@
 [package]
-name = "wasm-json"
+name = "ow-wasm-action"
 version = "0.1.0"
 authors = ["PhilippGackstatter <philipp.gackstatter@student.tuwien.ac.at>"]
 edition = "2018"

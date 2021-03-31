@@ -5,7 +5,7 @@ members = [
     "ow-common",
     "ow-wasmtime",
     "ow-wamr",
-    "wasm-json",
-    "wasm_precompiler",
+    "ow-wasm-action",
+    "ow-wasm-precompiler",
     "bench",
 ]
