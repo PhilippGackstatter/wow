@@ -2284,19 +2284,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ow-wasm-precompiler"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.13.0",
- "clap",
- "wasmer",
- "wasmer-compiler-llvm",
- "wasmtime",
- "zip",
-]
-
-[[package]]
 name = "ow-wasmer"
 version = "0.1.0"
 dependencies = [
@@ -2323,6 +2310,19 @@ dependencies = [
  "wasi-cap-std-sync",
  "wasmtime",
  "wasmtime-wasi",
+]
+
+[[package]]
+name = "ow-wasmtime-precompiler"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.13.0",
+ "clap",
+ "wasmer",
+ "wasmer-compiler-llvm",
+ "wasmtime",
+ "zip",
 ]
 
 [[package]]

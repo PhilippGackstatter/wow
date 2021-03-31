@@ -6,6 +6,6 @@ members = [
     "ow-wasmtime",
     "ow-wamr",
     "ow-wasm-action",
-    "ow-wasm-precompiler",
+    "ow-wasmtime-precompiler",
     "bench",
 ]
