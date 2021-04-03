@@ -1,11 +1,5 @@
 use serde_json::Value;
 
-extern crate wee_alloc;
-
-// Use `wee_alloc` as the global allocator.
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 // Expects to be called on a function with the signature
 // (json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error>
 #[macro_export]
