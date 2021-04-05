@@ -44,7 +44,7 @@ macro_rules! pass_json {
             let len: usize = args[args.len() - 1].parse().unwrap();
             let json = deserialize_slice(len);
 
-            let result = $crate::wrap_timestamped(json, $t);
+            let result = $t(json);
 
             let result = result.map_err(|err: anyhow::Error| {
                 let err_string = err.to_string();
@@ -68,8 +68,6 @@ macro_rules! pass_json {
             let slice = unsafe { &MEMORY_BUFFER[..len] };
             serde_json::from_slice(slice).expect("Could not deserialize slice")
         }
-
-
 
 
     )*)

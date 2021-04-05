@@ -9,6 +9,7 @@ ow_wasm_action::json_args!(func);
 pub fn func(_json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error> {
     let time = Instant::now();
 
+    #[cfg(feature = "prime")]
     let p = primal::Primes::all().nth(20000001 - 1).unwrap();
 
     Ok(serde_json::json!({
