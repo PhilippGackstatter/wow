@@ -1,3 +1,5 @@
+pub mod concurrency;
+
 use std::collections::HashMap;
 
 use async_std::{eprintln, println};
@@ -5,7 +7,7 @@ use futures::{stream::FuturesUnordered, Future, StreamExt};
 use ow_common::{ActionCapabilities, ActivationContext, ActivationInit, ActivationInitInner};
 use serde_json::Value;
 
-const SERVER_URI: &'static str = "http://127.0.0.1:9000";
+pub const SERVER_URI: &'static str = "http://172.17.0.1:3233";
 
 pub async fn init(
     action_name: &str,
