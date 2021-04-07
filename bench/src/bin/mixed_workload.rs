@@ -12,8 +12,8 @@ async fn main() -> anyhow::Result<()> {
     init(
         "net",
         net_file.to_owned(),
-        openwhisk_wasm_runtime::types::ActionCapabilities {
-            net_access: true,
+        ow_common::ActionCapabilities {
+            net_access: Some(true),
             ..Default::default()
         },
     )

@@ -1,5 +1,5 @@
 use bench::{benchmark, get_first_arg, init};
-use openwhisk_wasm_runtime::types::ActionCapabilities;
+use ow_common::ActionCapabilities;
 use serde_json::json;
 
 #[async_std::main]
@@ -11,7 +11,7 @@ async fn main() -> anyhow::Result<()> {
         ..Default::default()
     };
 
-    init(file_name, capabilities).await?;
+    init("filesys", file_name, capabilities).await?;
 
     generate_test_file().await;
 

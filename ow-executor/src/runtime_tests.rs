@@ -11,8 +11,6 @@ mod runtime_tests {
         capabilities: ActionCapabilities,
         input: serde_json::Value,
     ) -> Result<serde_json::Value, serde_json::Value> {
-        let module_bytes = String::from_utf8(module_bytes).unwrap();
-
         #[cfg(feature = "wasmtime_rt")]
         let runtime = ow_wasmtime::Wasmtime::default();
 

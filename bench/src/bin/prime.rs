@@ -6,9 +6,10 @@ async fn main() -> anyhow::Result<()> {
     let file_name = get_first_arg()?;
 
     init(
+        "prime",
         file_name,
-        openwhisk_wasm_runtime::types::ActionCapabilities {
-            net_access: true,
+        ow_common::ActionCapabilities {
+            net_access: Some(true),
             ..Default::default()
         },
     )
