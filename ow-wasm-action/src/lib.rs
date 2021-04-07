@@ -1,5 +1,3 @@
-use serde_json::Value;
-
 // Expects to be called on a function with the signature
 // (json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error>
 #[macro_export]
@@ -73,39 +71,6 @@ macro_rules! pass_json {
     )*)
 }
 
-pub fn wrap_timestamped<F>(
-    _json: serde_json::Value,
-    func: F,
-) -> Result<serde_json::Value, anyhow::Error>
-where
-    F: FnOnce(serde_json::Value) -> Result<serde_json::Value, anyhow::Error>,
-{
-    let entry_at = timestamp();
-
-    let result = func(_json);
-
-    let exit_at = timestamp();
-
-    result.map(|json| {
-        if let Value::Object(mut map) = json {
-            map.insert("entry_at".to_owned(), serde_json::json!(entry_at));
-            map.insert("exit_at".to_owned(), serde_json::json!(exit_at));
-            Value::Object(map)
-        } else {
-            panic!("Expected a JSON Object as result.");
-        }
-    })
-}
-
-fn timestamp() -> f64 {
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards.")
-        .as_secs_f64()
-}
-
 #[macro_export]
 macro_rules! json_args {
     ($($t:ident)*) => ($(
@@ -125,7 +90,7 @@ macro_rules! json_args {
             }
         }?;
 
-        let result: anyhow::Result<serde_json::Value> = $crate::wrap_timestamped(json, $t);
+        let result: anyhow::Result<serde_json::Value> = $t(json);
 
         match result {
             Ok(success) => {
