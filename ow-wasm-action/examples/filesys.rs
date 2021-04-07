@@ -6,7 +6,7 @@ use std::{
 #[cfg(feature = "wasm")]
 ow_wasm_action::pass_json!(func);
 
-#[cfg(feature = "bin")]
+#[cfg(not(feature = "wasm"))]
 ow_wasm_action::json_args!(func);
 
 // Needs to be created with --annotation dir "/tmp/filesys"

@@ -15,8 +15,9 @@ primal = { version = "0.2", optional = true }
 sha2 = { version = "0.9.3", optional = true }
 
 [features]
-default = ["bin"]
+default = ["wasm"]
 wasm = []
+# Left for easier compilation in justfile
 bin = []
 prime = ["primal"]
 random = ["rand", "rand_xoshiro"]

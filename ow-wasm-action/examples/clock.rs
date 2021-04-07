@@ -1,7 +1,7 @@
 #[cfg(feature = "wasm")]
 ow_wasm_action::pass_json!(func);
 
-#[cfg(feature = "bin")]
+#[cfg(not(feature = "wasm"))]
 ow_wasm_action::json_args!(func);
 
 use std::time::Instant;
