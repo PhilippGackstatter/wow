@@ -1,6 +1,6 @@
 use ow_executor::core;
-use tide_tracing::TraceMiddleware;
-use tracing::Level;
+// use tide_tracing::TraceMiddleware;
+// use tracing::Level;
 
 #[async_std::main]
 async fn main() -> anyhow::Result<()> {
@@ -13,14 +13,14 @@ async fn main() -> anyhow::Result<()> {
     #[cfg(feature = "wamr_rt")]
     let runtime = ow_wamr::Wamr::default();
 
-    let subscriber = tracing_subscriber::fmt()
-        .with_max_level(Level::TRACE)
-        .finish();
+    // let subscriber = tracing_subscriber::fmt()
+    //     .with_max_level(Level::TRACE)
+    //     .finish();
 
-    tracing::subscriber::set_global_default(subscriber).expect("no global subscriber has been set");
+    // tracing::subscriber::set_global_default(subscriber).expect("no global subscriber has been set");
 
     let mut executor = tide::with_state(runtime);
-    executor.with(TraceMiddleware::new());
+    // executor.with(TraceMiddleware::new());
 
     executor.at("/:container_id/destroy").post(core::destroy);
     executor.at("/:container_id/init").post(core::init);
