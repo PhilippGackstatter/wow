@@ -4,7 +4,7 @@ import sys
 
 
 def get_binary_names():
-    return [f.split(".rs")[0] for f in os.listdir("wasm-json/examples/")]
+    return [f.split(".rs")[0] for f in os.listdir("ow-wasm-action/examples/")]
 
 
 def zip_functions(binary_names):
