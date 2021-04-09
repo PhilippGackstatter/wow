@@ -10,6 +10,9 @@ build-amd64 runtime="":
 build-arm runtime="":
     cd ow-executor && cargo build --release --features {{runtime}} --target armv7-unknown-linux-gnueabihf
 
+build-aarch64 runtime="":
+    cd ow-executor && cargo build --release --features {{runtime}} --target aarch64-unknown-linux-gnu
+
 build-wasm-examples:
     just build-examples wasm32-wasi wasm
     find target/wasm32-wasi/release/examples/ -name "*.wasm" -exec ../binaryen/bin/wasm-opt -O4 -o {} {} \;
