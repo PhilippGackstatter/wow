@@ -29,7 +29,7 @@ pub async fn init(mut req: Request<impl WasmRuntime>) -> tide::Result<StatusCode
 
     let activation_init: ActivationInit = activation_init?;
 
-    println!("/init {:#?}", activation_init);
+    println!("/init {}", activation_init.value.name);
 
     let container_id = req.param("container_id").unwrap().to_owned();
 
@@ -51,7 +51,7 @@ pub async fn run(
 ) -> tide::Result<serde_json::Value> {
     let activation_context: ActivationContext = req.body_json().await?;
 
-    println!("/run {:#?}", activation_context);
+    println!("/run {}", activation_context.action_name);
 
     println!(
         "Running container with id {}",
