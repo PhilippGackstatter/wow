@@ -10,6 +10,6 @@ for arg in $argv
     set mod_name (module_basename $arg)
     set dir_name (dirname $arg)
     # --target=armv7
-    wamrc --opt-level=0 -o "$mod_name.wamr" $arg
+    wamrc --target=armv7 --opt-level=0 -o "$mod_name.wamr" $arg
     zip -m "$dir_name/$mod_name-wamr.zip" "$mod_name.wamr"
 end
