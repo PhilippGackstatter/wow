@@ -7,5 +7,5 @@ members = [
     "ow-wamr",
     "ow-wasm-action",
     "ow-wasmtime-precompiler",
-    "bench",
+    "ow-evaluation",
 ]
