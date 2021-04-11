@@ -12,7 +12,7 @@ anyhow = "1.0"
 rand = { version = "0.8.3", optional = true }
 rand_xoshiro = { version = "0.6.0", optional = true }
 primal = { version = "0.2", optional = true }
-sha2 = { version = "0.9.3", optional = true }
+blake3 = { version = "0.3.7", optional = true }
 
 [features]
 default = ["wasm"]
@@ -21,4 +21,4 @@ wasm = []
 bin = []
 prime = ["primal"]
 random = ["rand", "rand_xoshiro"]
-hash = ["sha2"]
+hash = ["blake3"]

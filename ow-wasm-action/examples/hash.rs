@@ -10,17 +10,16 @@ pub fn func(json: serde_json::Value) -> Result<serde_json::Value, anyhow::Error>
 
     #[cfg(feature = "hash")]
     let hash = {
-        use sha2::Digest;
         let mut prev_output;
         let mut hash = input.as_bytes();
 
         for _ in 0..iterations {
-            prev_output = sha2::Sha512::digest(hash);
-            hash = prev_output.as_slice()
+            prev_output = blake3::hash(hash);
+            hash = prev_output.as_bytes()
         }
 
         hash.to_vec()
     };
 
-    Ok(serde_json::json!({ "random": format!("{:x?}", hash) }))
+    Ok(serde_json::json!({ "hash": format!("{:x?}", hash) }))
 }
