@@ -10,6 +10,6 @@ for arg in $argv
     set mod_name (module_basename $arg)
     set dir_name (dirname $arg)
     # --target aarch64-unknown-linux
-    wasmer compile --llvm --native $arg -o "$mod_name.wasmer"
+    wasmer compile --target aarch64-unknown-linux --llvm --native $arg -o "$mod_name.wasmer"
     zip -m "$dir_name/$mod_name-wasmer.zip" "$mod_name.wasmer"
 end
