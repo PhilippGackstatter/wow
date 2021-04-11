@@ -1,5 +1,5 @@
-use bench::{benchmark, get_first_arg, init};
 use ow_common::ActionCapabilities;
+use ow_evaluation::{benchmark, get_first_arg, init};
 use serde_json::json;
 
 #[async_std::main]

@@ -1,5 +1,4 @@
 use tide::prelude::*;
-use tide::Request;
 
 #[async_std::main]
 async fn main() -> tide::Result<()> {

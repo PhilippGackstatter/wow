@@ -1,4 +1,4 @@
-use bench::concurrency::concurrency_test;
+use ow_evaluation::concurrency::concurrency_test;
 use serde_json::json;
 
 #[async_std::main]

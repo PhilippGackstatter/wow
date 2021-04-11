@@ -2222,11 +2222,11 @@ name = "ow-wasm-action"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "blake3",
  "primal",
  "rand 0.8.3",
  "rand_xoshiro",
  "serde_json",
- "sha2",
 ]
 
 [[package]]

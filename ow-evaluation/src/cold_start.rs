@@ -5,7 +5,7 @@ use futures::{stream::FuturesUnordered, Future, StreamExt};
 use serde::Serialize;
 use serde_json::Value;
 
-const ABORT_AFTER: usize = 15;
+const ABORT_AFTER: usize = 10;
 
 pub fn make_request(
     uri: &str,

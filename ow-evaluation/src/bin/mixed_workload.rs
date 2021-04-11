@@ -1,4 +1,4 @@
-use bench::{execute_requests, generate_requests, init};
+use ow_evaluation::{execute_requests, generate_requests, init};
 use rand::prelude::SliceRandom;
 use serde_json::{json, Value};
 
