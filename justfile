@@ -15,7 +15,7 @@ build-aarch64 runtime="":
 
 build-wasm-examples:
     just build-examples wasm32-wasi wasm
-    find target/wasm32-wasi/release/examples/ -name "*.wasm" -exec ../binaryen/bin/wasm-opt -O4 -o {} {} \;
+    find target/wasm32-wasi/release/examples/ -name "*.wasm" -exec wasm-opt -O4 -o {} {} \;
 
 build-bin-examples:
     just build-examples x86_64-unknown-linux-musl bin
