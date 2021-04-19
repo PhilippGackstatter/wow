@@ -10,3 +10,4 @@ anyhow = "1.0"
 serde_json = "1.0"
 dashmap = "4.0.2"
 ow-common = { path = "../ow-common" }
+lazy_static = "1.4.0"

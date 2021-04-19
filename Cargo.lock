@@ -2212,6 +2212,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dashmap",
+ "lazy_static",
  "ow-common",
  "serde_json",
  "wamr-sys",

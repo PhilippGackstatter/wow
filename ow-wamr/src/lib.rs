@@ -14,14 +14,48 @@ use ow_common::{ActionCapabilities, WasmAction, WasmRuntime};
 
 use wamr_sys::*;
 
+lazy_static::lazy_static! {
+    static ref GET_STR: CString = CString::new("get").unwrap();
+    static ref SIGNATURE_STR: CString = CString::new("(*)i").unwrap();
+    static ref HTTP_STR: CString = CString::new("http").unwrap();
+}
+
+static mut NATIVE_SYMBOLS: Vec<NativeSymbol> = Vec::new();
+
 struct WamrRuntimeState {}
 
-impl Default for WamrRuntimeState {
-    fn default() -> Self {
+impl WamrRuntimeState {
+    fn new() -> Self {
         if !unsafe { wasm_runtime_init() } {
             panic!("runtime_init failed");
         }
-        WamrRuntimeState {}
+
+        let native_get_symbol = NativeSymbol {
+            symbol: GET_STR.as_ptr(),
+            func_ptr: get as *mut std::ffi::c_void,
+            signature: SIGNATURE_STR.as_ptr(),
+            attachment: std::ptr::null::<std::ffi::c_void>() as *mut std::ffi::c_void,
+        };
+
+        unsafe { NATIVE_SYMBOLS = vec![native_get_symbol] };
+
+        if !unsafe {
+            wasm_runtime_register_natives(
+                HTTP_STR.as_ptr(),
+                NATIVE_SYMBOLS.as_mut_ptr(),
+                NATIVE_SYMBOLS.len() as u32,
+            )
+        } {
+            panic!("wasm_runtime_register_natives failed");
+        }
+
+        Self {}
+    }
+}
+
+impl Default for WamrRuntimeState {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -95,38 +129,6 @@ pub fn wamr_run_module(
     const HEAP_SIZE: u32 = 1024;
 
     unsafe {
-        // Avoid early deallocation
-        let get_str;
-        let sig_str;
-        let native_get_symbol;
-        let mut native_symbols;
-        let http_str;
-
-        if let Some(true) = capabilities.net_access {
-            println!("Linking http.get");
-            get_str = CString::new("get").unwrap();
-            sig_str = CString::new("(*)i").unwrap();
-
-            native_get_symbol = NativeSymbol {
-                symbol: get_str.as_ptr(),
-                func_ptr: get as *mut std::ffi::c_void,
-                signature: sig_str.as_ptr(),
-                attachment: std::ptr::null::<std::ffi::c_void>() as *mut std::ffi::c_void,
-            };
-
-            native_symbols = vec![native_get_symbol];
-
-            http_str = CString::new("http").unwrap();
-
-            if !wasm_runtime_register_natives(
-                http_str.as_ptr(),
-                native_symbols.as_mut_ptr(),
-                native_symbols.len() as u32,
-            ) {
-                bail!("wasm_runtime_register_natives failed");
-            }
-        }
-
         let time = std::time::Instant::now();
 
         let module = wasm_runtime_load(
