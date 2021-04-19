@@ -95,6 +95,38 @@ pub fn wamr_run_module(
     const HEAP_SIZE: u32 = 1024;
 
     unsafe {
+        // Avoid early deallocation
+        let get_str;
+        let sig_str;
+        let native_get_symbol;
+        let mut native_symbols;
+        let http_str;
+
+        if let Some(true) = capabilities.net_access {
+            println!("Linking http.get");
+            get_str = CString::new("get").unwrap();
+            sig_str = CString::new("(*)i").unwrap();
+
+            native_get_symbol = NativeSymbol {
+                symbol: get_str.as_ptr(),
+                func_ptr: get as *mut std::ffi::c_void,
+                signature: sig_str.as_ptr(),
+                attachment: std::ptr::null::<std::ffi::c_void>() as *mut std::ffi::c_void,
+            };
+
+            native_symbols = vec![native_get_symbol];
+
+            http_str = CString::new("http").unwrap();
+
+            if !wasm_runtime_register_natives(
+                http_str.as_ptr(),
+                native_symbols.as_mut_ptr(),
+                native_symbols.len() as u32,
+            ) {
+                bail!("wasm_runtime_register_natives failed");
+            }
+        }
+
         let time = std::time::Instant::now();
 
         let module = wasm_runtime_load(
@@ -345,4 +377,9 @@ fn lookup_function(
     } else {
         Err(anyhow::anyhow!("function `{}` not found", func_name))
     }
+}
+
+extern "C" fn get(_exec_env: wasm_exec_env_t) -> i32 {
+    std::thread::sleep(std::time::Duration::new(0, 300_000_000));
+    0
 }
