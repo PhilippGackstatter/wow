@@ -2,10 +2,10 @@ use anyhow::anyhow;
 use std::{fs, path::Path, ptr::slice_from_raw_parts, sync::Arc};
 
 use dashmap::DashMap;
-use wasmer::{Instance, Module, Store};
+use wasmer::{ImportObject, Instance, Module, Store};
 use wasmer_wasi::{WasiEnv, WasiState};
 
-use ow_common::{util, ActionCapabilities, WasmAction, WasmRuntime};
+use ow_common::{ActionCapabilities, WasmAction, WasmRuntime};
 
 #[derive(Clone)]
 pub struct Wasmer {
@@ -69,9 +69,16 @@ impl WasmRuntime for Wasmer {
 
         let mut wasi_env = build_wasi_env(&wasm_action.capabilities, json_bytes.len())?;
 
-        let import_object = wasi_env.import_object(&module)?;
+        let wasi_import_object = wasi_env.import_object(&module)?;
 
-        let instance = Instance::new(&module, &import_object)?;
+        let http_get_import = self.get_http_import();
+
+        let merge_resolver = MergeResolver {
+            wasi_import_object,
+            http_get_import,
+        };
+
+        let instance = Instance::new(&module, &merge_resolver)?;
 
         let main = instance.exports.get_function("_start")?;
 
@@ -80,6 +87,42 @@ impl WasmRuntime for Wasmer {
         main.call(&[])?;
 
         Ok(get_return_value(&instance))
+    }
+}
+
+use wasmer::Resolver;
+
+struct MergeResolver {
+    wasi_import_object: ImportObject,
+    http_get_import: ImportObject,
+}
+
+impl Resolver for MergeResolver {
+    fn resolve(&self, index: u32, module: &str, field: &str) -> Option<wasmer::Export> {
+        if let resolved @ Some(_) = self.http_get_import.resolve(index, module, field) {
+            resolved
+        } else {
+            self.wasi_import_object.resolve(index, module, field)
+        }
+    }
+}
+
+impl Wasmer {
+    fn get_http_import(&self) -> ImportObject {
+        let store = &self.store;
+
+        let import_object = wasmer::imports! {
+            "http" => {
+                "get" => wasmer::Function::new_native(&store, || -> i32 {
+                    // Fake call by blocking for 300ms
+                    std::thread::sleep(std::time::Duration::new(0, 300_000_000));
+
+                    0
+                })
+            },
+        };
+
+        import_object
     }
 }
 
