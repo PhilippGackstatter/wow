@@ -101,11 +101,8 @@ impl WasmRuntime for Wasmtime {
 
 fn link_net(linker: &mut Linker) -> anyhow::Result<()> {
     linker.func("http", "get", || -> i32 {
-        if let Ok(resp) = reqwest::blocking::get("http://127.0.0.1:8080/block") {
-            if let Ok(txt) = resp.text() {
-                return txt.len() as i32;
-            }
-        }
+        // Fake call by blocking for 300ms
+        std::thread::sleep(std::time::Duration::new(0, 300_000_000));
 
         0
     })?;
