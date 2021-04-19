@@ -26,6 +26,7 @@ build-examples target feature:
     cd ow-wasm-action
     cargo build --release --example add --target {{target}} --no-default-features --features {{feature}}
     cargo build --release --example hash --target {{target}} --no-default-features --features {{feature}},hash
+    cargo build --release --example block --target {{target}} --no-default-features --features {{feature}}
     cargo build --release --example random --target {{target}} --no-default-features --features {{feature}},random
     cargo build --release --example prime --target {{target}} --no-default-features --features {{feature}},prime
     cargo build --release --example filesys --target {{target}} --no-default-features --features {{feature}}
