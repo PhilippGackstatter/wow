@@ -8,7 +8,8 @@ use futures::{stream::FuturesUnordered, Future, StreamExt};
 use ow_common::{ActionCapabilities, ActivationContext, ActivationInit, ActivationInitInner};
 use serde_json::Value;
 
-pub const SERVER_URI: &'static str = "http://172.17.0.1:3233";
+// pub const SERVER_URI: &'static str = "http://172.17.0.1:3233";
+pub const SERVER_URI: &'static str = "http://10.0.0.15:3233";
 
 pub async fn init(
     action_name: &str,
