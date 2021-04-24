@@ -2,21 +2,21 @@ use anyhow::anyhow;
 use std::{fs, path::Path, ptr::slice_from_raw_parts, sync::Arc};
 
 use dashmap::DashMap;
-use wasmer::{ImportObject, Instance, Module, Store};
+use wasmer::{ImportObject, Instance, Module, NativeEngine, Store};
 use wasmer_wasi::{WasiEnv, WasiState};
 
 use ow_common::{ActionCapabilities, WasmAction, WasmRuntime};
 
 #[derive(Clone)]
 pub struct Wasmer {
-    pub store: Store,
+    pub engine: NativeEngine,
     pub modules: Arc<DashMap<String, WasmAction<Module>>>,
 }
 
 impl Default for Wasmer {
     fn default() -> Self {
         Self {
-            store: wasmer::Store::new(&wasmer::Native::headless().engine()),
+            engine: wasmer::Native::headless().engine(),
             modules: Arc::new(DashMap::new()),
         }
     }
@@ -29,7 +29,9 @@ impl WasmRuntime for Wasmer {
         capabilities: ActionCapabilities,
         module: Vec<u8>,
     ) -> anyhow::Result<()> {
-        let module = unsafe { Module::deserialize(&self.store, &module)? };
+        let store = Store::new(&self.engine);
+
+        let module = unsafe { Module::deserialize(&store, &module)? };
 
         let action = WasmAction {
             module,
@@ -109,20 +111,21 @@ impl Resolver for MergeResolver {
 
 impl Wasmer {
     fn get_http_import(&self) -> ImportObject {
-        let store = &self.store;
+        // let store = &self.store;
 
-        let import_object = wasmer::imports! {
-            "http" => {
-                "get" => wasmer::Function::new_native(&store, || -> i32 {
-                    // Fake call by blocking for 300ms
-                    std::thread::sleep(std::time::Duration::new(0, 300_000_000));
+        // let import_object = wasmer::imports! {
+        //     "http" => {
+        //         "get" => wasmer::Function::new_native(&store, || -> i32 {
+        //             // Fake call by blocking for 300ms
+        //             std::thread::sleep(std::time::Duration::new(0, 300_000_000));
 
-                    0
-                })
-            },
-        };
+        //             0
+        //         })
+        //     },
+        // };
 
-        import_object
+        // import_object
+        wasmer::imports! {}
     }
 }
 
