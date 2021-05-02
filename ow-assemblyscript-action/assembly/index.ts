@@ -1,22 +1,5 @@
 import { JSON } from "assemblyscript-json";
-
-function handler(json: JSON.Obj): JSON.Obj | null {
-
-  let param1 = json.getInteger("param1")
-  let param2 = json.getInteger("param2")
-
-  if (param1 != null && param2 != null) {
-
-    let result = new JSON.Obj()
-    result.set("result", param1.valueOf() + param2.valueOf())
-    return result
-
-  } else {
-    console.error("parameters `param1` or `param2` were not present")
-    return null
-  }
-
-}
+import { handler } from "./prime";
 
 export default function _start(): void {
 
@@ -45,17 +28,12 @@ function loadJson(len: i32): JSON.Obj {
 
   const json_str = String.UTF8.decode(buf, false)
 
-  console.log(`Read ${json_str}`)
-
   let jsonObj: JSON.Obj = <JSON.Obj>(JSON.parse(json_str));
 
   return jsonObj
 }
 
-// , error?: bool | undefined
 function storeJson(json: JSON.Obj, error: boolean): void {
-  console.log(`Storing json`)
-
   // Wrap it in the Rust Result type
   let result_wrapper = new JSON.Obj()
   if (error) {
@@ -93,5 +71,3 @@ export function get_wasm_memory_buffer_len(): usize {
 export function get_wasm_memory_buffer_pointer(): usize {
   return buffer_ptr
 }
-
-export function abort(message: string | null, fileName: string | null, lineNumber: u32, columnNumber: u32): void { }
