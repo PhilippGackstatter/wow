@@ -4,10 +4,6 @@ export default function main(): void {
     let json = new JSON.Obj()
     json.set("upperBound", 200000);
     let result = handler(json)
-
-    if (result != null) {
-        console.log(result.toString())
-    }
 }
 
 export function handler(json: JSON.Obj): JSON.Obj | null {
@@ -19,16 +15,13 @@ export function handler(json: JSON.Obj): JSON.Obj | null {
         let result = new JSON.Obj()
         result.set("result", num_primes)
         return result
-    } else {
-        console.log("null")
     }
-
 
     return null
 }
 
 // https://rosettacode.org/wiki/Sieve_of_Eratosthenes#JavaScript
-function eratosthenes(limit: i32): i32 {
+export function eratosthenes(limit: i32): i32 {
     var prms: number[] = [];
 
     if (limit >= 2) prms = [2];

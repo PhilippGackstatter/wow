@@ -1,5 +1,5 @@
 import { JSON } from "assemblyscript-json";
-import { handler } from "./prime";
+import { handler } from "./prime-as-handler";
 
 export default function _start(): void {
 
