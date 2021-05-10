@@ -2,19 +2,21 @@ use anyhow::anyhow;
 use std::{fs, path::Path, ptr::slice_from_raw_parts, sync::Arc};
 
 use dashmap::DashMap;
-use wasmer::{ImportObject, Instance, Module, Store};
+use wasmer::{ImportObject, Instance, Module, Store, NativeEngine};
 use wasmer_wasi::{WasiEnv, WasiState};
 
 use ow_common::{ActionCapabilities, WasmAction, WasmRuntime};
 
 #[derive(Clone)]
 pub struct Wasmer {
+    pub engine: NativeEngine,
     pub modules: Arc<DashMap<String, WasmAction<Module>>>,
 }
 
 impl Default for Wasmer {
     fn default() -> Self {
         Self {
+            engine: wasmer::Native::headless().engine(),
             modules: Arc::new(DashMap::new()),
         }
     }
@@ -27,8 +29,7 @@ impl WasmRuntime for Wasmer {
         capabilities: ActionCapabilities,
         module: Vec<u8>,
     ) -> anyhow::Result<()> {
-        let engine = wasmer::Native::headless().engine();
-        let store = Store::new(&engine);
+        let store = Store::new(&self.engine);
 
         let module = unsafe { Module::deserialize(&store, &module)? };
 
