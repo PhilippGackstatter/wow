@@ -58,12 +58,6 @@ impl WasmRuntime for Wasmer {
             .get(container_id)
             .ok_or_else(|| anyhow!(format!("No action named {}", container_id)))?;
 
-        // let before = Instant::now();
-        // println!(
-        //     "wasmer deserializing took {}ms",
-        //     before.elapsed().as_millis()
-        // );
-
         let module = &wasm_action.module;
 
         let json_bytes = serde_json::to_vec(&parameters).unwrap();
