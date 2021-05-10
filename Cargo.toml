@@ -9,3 +9,6 @@ members = [
     "ow-wasmtime-precompiler",
     "ow-evaluation",
 ]
+
+[profile.release]
+lto = true
