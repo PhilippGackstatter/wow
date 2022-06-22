@@ -5,7 +5,7 @@ authors = ["PhilippGackstatter <philipp.gackstatter@student.tuwien.ac.at>"]
 edition = "2018"
 
 [dependencies]
-wamr-sys = { path = "../../wamr-sys", version = "0.1" }
+wamr-sys = { version = "0.1" }
 anyhow = "1.0"
 serde_json = "1.0"
 dashmap = "4.0.2"

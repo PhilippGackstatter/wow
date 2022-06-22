@@ -2,6 +2,8 @@ use ow_executor::core;
 // use tide_tracing::TraceMiddleware;
 // use tracing::Level;
 
+static ADDRESS: &str = "127.0.0.1:9000";
+
 #[async_std::main]
 async fn main() -> anyhow::Result<()> {
     #[cfg(feature = "wasmtime_rt")]
@@ -26,7 +28,9 @@ async fn main() -> anyhow::Result<()> {
     executor.at("/:container_id/init").post(core::init);
     executor.at("/:container_id/run").post(core::run);
 
-    executor.listen("127.0.0.1:9000").await.unwrap();
+    println!("Listening on: {}", ADDRESS);
+
+    executor.listen(ADDRESS).await.unwrap();
 
     Ok(())
 }
