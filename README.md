@@ -151,7 +151,7 @@ which prints:
 }
 ```
 
-And we get `4` as a result. And that's it, we've run a serverless function with WebAssembly! Try running one of the other examples in ``ow-wasm-action/examples/`, the appropriate compilation commands and features can be found in the `justfile`.
+And we get `4` as a result. And that's it, we've run a serverless function with WebAssembly! Try running one of the other examples in `ow-wasm-action/examples/`, the appropriate compilation commands and features can be found in the `justfile`.
 
 ## Building
 
