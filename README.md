@@ -39,7 +39,7 @@ cargo build --manifest-path ./ow-executor/Cargo.toml --release --features wasmti
 2. Next we build the `add` example for the `wasm32-wasi` target with:
 
 ```sh
-cargo build --manifest-path ./ow-wasm-action/Cargo.toml --release --example add --target wasm32-wasi --no-default-features
+cargo build --manifest-path ./ow-wasm-action/Cargo.toml --release --example add --target wasm32-wasi --no-default-features --features wasm
 
 # Optional step to optimize the compiled Wasm if `wasm-opt` is installed
 # On Ubuntu it can be installed with `sudo apt install binaryen`
